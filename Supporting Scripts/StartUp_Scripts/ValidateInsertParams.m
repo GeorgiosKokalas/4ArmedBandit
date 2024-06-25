@@ -117,9 +117,9 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     end
 
     % Evaluating target.scores
-    if ~isnumlist(in_pars.target.scores, "nat") || length(in_pars.target.scores) ~= 4
-        disp("Inoperable value provided for in_pars.target.scores. Applying default...");
-        in_pars.target.scores = [7, 2, 4, 9];
+    if ~iswhole(in_pars.target.score_change_rng, "nat") || in_pars.target.score_change_rng > 100
+        disp("Inoperable value provided for in_pars.target.score_change_rng. Applying default...");
+        in_pars.target.score_change_rng = 30;
     end   
 
     % extra variables for in_pars.trial
@@ -145,7 +145,7 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     end
     if change_pb || ~isvector(in_pars.disbtn.player)
         disp("Inoperable value provided for in_pars.disbtn.player. Applying default...");
-        in_pars.disbtn.player = 'Y';
+        in_pars.disbtn.player = 'A';
     end
 
     % Evaluating disbtn.cpu
@@ -164,7 +164,7 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     end
     if change_cb || ~isvetor(in_pars.disbtn.cpu) || dcl ~= dpl
         disp("Inoperable value provided for in_pars.disbtn.cpu. Applying default...");
-        in_pars.disbtn.cpu = repmat('A', 1, dpl);
+        in_pars.disbtn.cpu = repmat('Y', 1, dpl);
     end
     
     coords = [x/2, y/4; 3*x/4, y/2; x/2, 3*y/4; x/4, y/2];

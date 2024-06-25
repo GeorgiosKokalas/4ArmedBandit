@@ -6,10 +6,10 @@
 
 classdef CpuPlayer < handle
     properties
-        Behavior_Mode   % Mode of Behavior, each mode interprets and reacts to the player's actions differently 
-        Choice_List     % The list of choices that we have   
+        Behavior_Mode   % Mode of Behavior, each mode interprets and reacts to the player's actions differently    
         Next_Choice     % The choice that will be made next by the Cpu
         Choice_Origins  % The start choice that we define
+        Choice_List     % The list of choices that we have
     end
 
     methods
@@ -28,9 +28,9 @@ classdef CpuPlayer < handle
         function changeBehavior(obj)
              switch (obj.Behavior_Mode)
                  case 1
-                     % Code for Behavior 1 here
+                     %
                  case 2
-                     % Code for Behavior 1 here
+                     %
              end
         end
 
@@ -38,9 +38,9 @@ classdef CpuPlayer < handle
         function Choice = getResponce(obj)
              switch (obj.Behavior_Mode)
                  case 1
-                     % Code for Behavior 1 here
+                     %
                  case 2
-                     % Code for Behavior 1 here
+                     %
              end
         end
     

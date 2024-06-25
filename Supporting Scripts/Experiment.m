@@ -52,10 +52,10 @@ function Experiment(Parameters)
     for block_idx = 1:num_blocks
         table_name = combos_str(block_idx);
         block_total = struct('player', 0, 'cpu', 0);
-        button_scores = Parameters.target.scores;
+        button_scores = GetScores(length(Parameters.target.buttons), Parameters.target.score_change_rng, true);
         for trial_idx = 1:Parameters.trial.num
             [pl_data, cpu_data] = RunTrial();
-            button_scores = UpdateButtonScores(Parameters.Target.scores);
+            button_scores = GetScores(length(Parameters.target.buttons), Parameters.target.score_change_rng);
 
             pl_choices.(table_name)(trial_idx) = pl_data.choice;
             pl_scores.(table_name)(trial_idx)  = pl_data.score;

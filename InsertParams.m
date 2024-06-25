@@ -40,7 +40,7 @@ function in_pars = InsertParams(Patient_Name)
                              color_list.red    * 0.8;...
                              color_list.green  * 0.8;...
                              color_list.blue   * 0.8];  % 4 RGBA values
-    in_pars.target.scores = [7, 2, 4, 9];     % Vector of 4 Positive integers 1-10
+    in_pars.target.score_change_rng = 30;     % Vector of 4 Positive integers 1-10
     
     in_pars.disbtn.player = 'A';
     in_pars.disbtn.cpu = 'Y';
