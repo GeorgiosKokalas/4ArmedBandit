@@ -1,0 +1,49 @@
+classdef CpuPrisoner < handle
+    %UNTITLED Summary of this class goes here
+    %   Detailed explanation goes here
+
+    properties
+        Behavior_Mode   % Behavior
+        Cooperation
+        Benevolence
+        Trust
+    end
+
+    methods
+        % Constructor
+        function obj = CpuPrisoner(behavior_mode,cooperation,benevolence, trust)
+            if ~exist("behavior_mode", "var"); behavior_mode = 1; end
+            if ~exist("cooperation","var"); cooperation = 100; end
+            if ~exist("benevolence", "var"); benevolence = 100; end
+            if ~exist("trust", "var"); trust = 100; end
+            
+            obj.Behavior_Mode = behavior_mode;
+            obj.Cooperation = cooperation;
+            obj.Benevolence = benevolence;
+            obj.Trust = trust;
+        end
+        
+        % Method that changes the behavior of the prisoner based on the
+        % player's prior choices.
+        function changeBehavior(obj, player_nice)
+            if ~islogical(player_nice) || ~isscalar(player_nice)
+                error("Wrong value for player choice")
+            end
+
+            switch obj.Behavior_Mode
+                case 1
+                    if player_nice; obj.Cooperation = 100; 
+                    else; obj.Cooperation = 0;
+                    end
+            end
+        end
+
+        % Method that gives the prisoner's responce
+        function will_cooperate = getResponce(obj)
+            switch obj.Behavior_Mode
+                case 1
+                    will_cooperate = obj.Cooperation < 100;
+            end
+        end
+    end
+end
