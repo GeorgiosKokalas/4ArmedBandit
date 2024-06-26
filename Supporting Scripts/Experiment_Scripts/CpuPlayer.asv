@@ -6,10 +6,13 @@
 
 classdef CpuPlayer < handle
     properties
-        Behavior_Mode   % Mode of Behavior, each mode interprets and reacts to the player's actions differently    
+        Behavior_Mode   % Mode of Behavior, each mode interprets and reacts to the player's actions differently 
+        Choice_List     % The list of choices that we have   
         Next_Choice     % The choice that will be made next by the Cpu
         Choice_Origins  % The start choice that we define
-        Choice_List     % The list of choices that we have
+        Epsilon         % Sets the epsilon value for e-greedy algo
+        Rewards         % Rewards received
+        Counts          % Counts per choice
     end
 
     methods
@@ -18,19 +21,43 @@ classdef CpuPlayer < handle
             if ~exist("behavior_mode", "var"); behavior_mode = 1; end
             if ~exist("choice_list", "var"); choice_list = ['A', 'B', 'X']; end
             if ~exist("next_choice", "var"); next_choice = 'A'; end
+            if ~exist("epsilon", "var"); epsilon = 0.1; end
             
             obj.Behavior_Mode = behavior_mode;
             obj.Choice_List = choice_list;
+            obj.Epsilon = epsilon;
+            obj.Rewards = zeros(1, length(choice_list));
+            obj.Counts = zeros(1, length(choice_list));
             [obj.Next_Choice, obj.Choice_Origins] = deal(next_choice);
+            % Something that is adding up the points for the each of the
+            % choices?
         end
         
         % Method that changes the behavior of the cpu 
-        function changeBehavior(obj)
-             switch (obj.Behavior_Mode)
+        function changeBehavior(obj,varargin)           %changeBehavior(obj)
+                 % 1st arg = score we got
+                 % 2nd arg = choice we made
+                 % index of 
+            switch (obj.Behavior_Mode)
                  case 1
-                     %
-                 case 2
-                     %
+                     % initialize an array of buttons (X,Y,A) for example
+                     %find where B is in choice list and go to rewards and
+                     %increment the points there
+                     %varargin 
+
+                     % Code for Behavior 1 here: Epsilon Greedy
+                        if rand() < obj.Epsilon
+                            % Choose a random action with probability epsilon
+                            obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List)));
+                        else
+                            % Choose the best-known action with probability 1 - epsilon
+                            [~, best_index] = max(obj.Rewards ./ max(1, obj.Counts));
+                            obj.Next_Choice = obj.Choice_List(best_index);
+                        end
+
+                 case 2 % random
+                     % Code for Behavior 2 here
+                     obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List)));
              end
         end
 
@@ -38,10 +65,17 @@ classdef CpuPlayer < handle
         function Choice = getResponce(obj)
              switch (obj.Behavior_Mode)
                  case 1
-                     %
+                     % Code for Behavior 1 here
+                     Choice = obj.Next_Choice;
                  case 2
-                     %
+                     % Code for Behavior 1 here
              end
+        end
+
+        function updateRewards(obj, choice, reward)
+            choice_index = find(obj.Choice_List == choice);
+            obj.Rewards(choice_index) = obj.Rewards(choice_index) + reward;
+            obj.Counts(choice_index) = obj.Counts(choice_index) + 1;
         end
     
         % Resets the CPU after every block
