@@ -19,7 +19,7 @@ function in_pars = InsertParams(Patient_Name)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % in_pars.screen - Determines the color of the screen the participant will be playing in 
-    in_pars.screen.color = color_list.grey;      % RGBA - Determines the color of the screen
+    in_pars.screen.color = color_list.black;      % RGBA - Determines the color of the screen
     
     % Optional parameters, best left untouched.
     in_pars.screen.screen = max(Screen('Screens')); % Select the Screen you want to use.
@@ -30,10 +30,12 @@ function in_pars = InsertParams(Patient_Name)
     
     in_pars.text.size.default = 40;                 % Integer - Determines the default text size
     in_pars.text.size.intro = 45;
+    in_pars.text.size.score_count = 50;
 
+    in_pars.trial.show_intro = true;
     in_pars.trial.duration_s = 20;                  % Positive integer - Determines how long someone has to provide an answer
     in_pars.trial.cpu_wait_s = [2, 4];              % Vector of 2 whole numbers - Determines how long the player waits for the opponent input
-    in_pars.trial.num = 100;
+    in_pars.trial.num = 2;
 
     in_pars.target.radius = 0;                % Positive integer - Give 0 for max radius
     in_pars.target.colors = [color_list.yellow * 0.8;...

@@ -1,68 +1,61 @@
 % Function called by Experiment.m
 % Role of function is to introduce the participant to the experiment
 % Parameters: 
-%   - screen_pars (parameters for the screen used by the Program)
-%   - player_pars (parameters for the player)
-%   - score_pars  (parameters for the scores)
-%   - target_pars (parameters for the targets)
+%   - Screen_Pars (parameters for the screen used by the Program)
+%   - Text_Pars  (parameters for the text)
 % Return Values: None
 
-function Introduction(screen_pars, player_pars, score_pars, target_pars)
+function Introduction(Screen_Pars, Text_Pars, Targ_Pars)
     % Load the colors
     load('colors.mat','color_list');
+    
+    % Set the appropriate text size for the intro
+    Screen('TextSize', Screen_Pars.window, Text_Pars.size.intro);
 
     % % Create the Introductory Message for the Experiment 
-    greeting_message = ['Hello, in this experiment, you will be playing Split or Steal with an unknown party.\n', ...
-                        'Each turn, you will be given a specific amount of money which you will be contesting for.\n', ...
-                        'You and your coplayer can choose to split the money or steal it.\n', ...
-                        'Should both of you choose to split, the money will be split evenly between the 2 of you.\n', ...
-                        'If one person splits and the other steals, all of the money goes to the person stealing.\n', ...
-                        'If both people choose to steal, no player gets anything.\n', ...
-                        char("If you fail to choose in time, you will automatically forfeit the money regardless of the other player's choice\n"), ...
-                        'Your goal is to gather as much money as you can.\n\n\n', ...
-                        'Feel free to ask any questions. Once you are ready, press any button to proceed.'];
-    DrawFormattedText(screen_pars.window, greeting_message, 'center', screen_pars.center(2)-150, color_list.white);
+    greeting_message = ['Hello, welcome to the multi armed bandit task\n',...
+                        'Your goal is to get as many points as you can by learning which buttons reward the most.\n',...
+                        'You will be presented with four choices that are mapped to the four buttons of your controller.\n', ...
+                        'One of these choices will be unavailable, and will be grayed out.\n',...
+                        'NOTE: Points yielded by every button CAN change over time.\n\n\n',...
+                        'You will be playing against a player at a time.\n', ...
+                        'You can observe their choices and scores to maximize the outcome of yours.\n\n\n', ...
+                        'Press any buttons to proceed.'];
+                        
+    DrawFormattedText(Screen_Pars.window, greeting_message, 'center', Screen_Pars.center(2)-200, color_list.white);
 
     % Update the Screen
-    Screen('Flip',screen_pars.window);
+    Screen('Flip',Screen_Pars.window);
+    while ~KbCheck() && ~GetXBox().AnyButton; end
+    WaitSecs(0.5);
 
     % Wait for player input
     % KbStrokeWait();
-    while ~KbCheck() && ~GetXBox().AnyButton; end
-     WaitSecs(0.5);
-    
+    break_loop = false;
+    controls_message = ['Familiarize yourself with the controls. \n',...
+                        'When ready press any other button'];                  
 
-    % Let the player play with their 'character'
-    % Set the starting position for the player
-    player_pos = screen_pars.center;
+    while ~break_loop
+        pl_i = GetXBox();
+        for button_idx = 1:length(Targ_Pars.button_names)
+            color = Targ_Pars.colors(button_idx,:);
+            if pl_i.(Targ_Pars.button_names(button_idx))
+                color = color/0.8;
+            end
 
-    % Loops as longs as the player doesn't press any keyboard buttons
-    while ~KbCheck() && ~GetXBox().AnyButton
-        % Draw out the messages 
-        player_message_1 = 'This is you. Feel free to move around to get used to the controls.';
-        player_message_2 = 'Press any key once you are ready.';
-        DrawFormattedText(screen_pars.window, player_message_1, 'center', screen_pars.center(2)-player_pars.radius-20, color_list.white);
-        DrawFormattedText(screen_pars.window, player_message_2, 'center', screen_pars.center(2)+player_pars.radius+50, color_list.white);
-        
-        [player_pos, player_rect] = MovePlayer(player_pos, player_pars.speed, player_pars.radius, screen_pars.window_dims);
+            Screen('FillOval',Screen_Pars.window, color, Targ_Pars.rects(button_idx,:));
 
-        [image, ~, alpha] = imread("Split_icon2.png");
-        image(:,:,4) = alpha;
-        Texture = Screen('MakeTexture', screen_pars.window, image);
+            DrawIcon(Screen_Pars.window, ['Letter_', Targ_Pars.button_names(button_idx), '.png'],...
+                Targ_Pars.rects(button_idx,:));
+        end
+        DrawFormattedText(Screen_Pars.window, controls_message, 0, Text_Pars.size.intro, color_list.white);
 
-        % Get the size of the image
-        [s1, s2, ~] = size(image);
+        Screen('Flip',Screen_Pars.window);
 
-        % Define the destination rectangle (position it without centering)
-        dstRect = [100, 100, 100 + s2, 100 + s1]; % Adjust (100, 100) to the desired top-left position
-        Screen('DrawTexture', screen_pars.window, Texture, [], dstRect);
-
-        
-        % Draw the playable character in the new position
-        Screen('FillOval', screen_pars.window, player_pars.color, player_rect);
-
-        % Update the Screen
-        Screen('Flip', screen_pars.window);
+        break_loop = KbCheck() || (pl_i.AnyButton && ~pl_i.A && ~pl_i.B && ~pl_i.X && ~pl_i.Y);
+        % break_loop = KbCheck() || pl_i.RB || pl_i.LB || pl_i.RT > 0.5 || pl_i.LT > 0.5 || ...
+        %              pl_i.DPadDown || pl_i.DPadLeft || pl_i.DPadUp || pl_i.DPadRight || ...
+        %              ;
     end
     WaitSecs(0.5);
 end

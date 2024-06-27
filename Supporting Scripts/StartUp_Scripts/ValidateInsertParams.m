@@ -71,6 +71,12 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
 
 
     %in_pars.trial - VALUE EVALUATION
+    % Evaluating show_intro
+    if ~isscalar(in_pars.trial.show_intro) || ~islogical(in_pars.trial.show_intro)
+        disp("Inoperable value provided for in_pars.trial.show_intro. Applying default...");
+        in_pars.trial.show_intro = 20;
+    end
+
     % Evaluating duration_s
     if ~isnat(in_pars.trial.duration_s)
         disp("Inoperable value provided for in_pars.trial.duration_s. Applying default...");
@@ -84,10 +90,13 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     end
 
     % Evaluating num
-    if ~isnat(in_pars.trial.cpu_wait_s)
+    if ~isnat(in_pars.trial.num)
         disp("Inoperable value provided for in_pars.trial.num. Applying default...");
-        in_pars.trial.num = 100;
+        in_pars.trial.num = 5;
     end
+
+    % Extra variables for in_pars.trial.cpu_wait_s
+    in_pars.trial.cpu_wait_dur = in_pars.trial.cpu_wait_s(2) - in_pars.trial.cpu_wait_s(1);
 
 
     %in_pars.target - VALUE EVALUATION
@@ -95,15 +104,20 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
 
     % Evaluating target.radius
     smaller_dim = min(in_pars.screen.window_dims);
+    w_width = in_pars.screen.window_width;
+    w_height = in_pars.screen.window_height;
+    shorter_dist = min([sqrt( (w_width/4)^2 + (w_height/4)^2 ), w_width/2, w_height/ 2]);
     if ~isnat(in_pars.target.radius) || target.radius > smaller_dim/2 - 10
         if in_pars.target.radius == 0
             disp("Max option selected for in_pars.target.radius.");
-            in_pars.target.radius = smaller_dim/2 - 10;
+            in_pars.target.radius = shorter_dist/2 - 20;
         else
             disp("Inoperable value provided for in_pars.trial.cpu_wait_s. Applying default...")
-            in_pars.target.radius = smaller_dim/2 - 10;
+            in_pars.target.radius = shorter_dist/2 - 20;
         end
     end
+    in_pars.target.radius = max(20, in_pars.target.radius);
+   
 
     %Evaluating target.colors
     tch = height(in_pars.target.colors);
@@ -117,7 +131,7 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     end
 
     % Evaluating target.scores
-    if ~iswhole(in_pars.target.score_change_rng, "nat") || in_pars.target.score_change_rng > 100
+    if ~iswhole(in_pars.target.score_change_rng) || in_pars.target.score_change_rng > 100
         disp("Inoperable value provided for in_pars.target.score_change_rng. Applying default...");
         in_pars.target.score_change_rng = 30;
     end   
@@ -126,6 +140,15 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     x = in_pars.screen.window_width;
     y = in_pars.screen.window_height;
     r = in_pars.target.radius;
+    coords = [x/2, y/4; 3*x/4, y/2; x/2, 3*y/4; x/4, y/2];
+    rects = zeros(4,4);
+    for idx = 1:4
+        rects(idx,:) = [coords(idx, 1)-r, coords(idx, 2)-r, coords(idx, 1)+r, coords(idx, 2)+r];
+    end
+    in_pars.target.button_names = button_names;
+    in_pars.target.coords = coords;
+    in_pars.target.rects = rects;
+
 
 
     % in_pars.disbtn (disable buttons) - VALUE EVALUATION
@@ -162,20 +185,10 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
             break;
         end
     end
-    if change_cb || ~isvetor(in_pars.disbtn.cpu) || dcl ~= dpl
+    if change_cb || ~isvector(in_pars.disbtn.cpu) || dcl ~= dpl
         disp("Inoperable value provided for in_pars.disbtn.cpu. Applying default...");
         in_pars.disbtn.cpu = repmat('Y', 1, dpl);
     end
-    
-    coords = [x/2, y/4; 3*x/4, y/2; x/2, 3*y/4; x/4, y/2];
-    rects = zeros(4,4);
-    for idx = 1:4
-        rects(idx,:) = [coords(idx, 1)-r, coords(idx, 2)-r, coords(idx, 1)+r, coords(idx, 2)+r];
-    end
-    in_pars.trial.button_names = button_names;
-    in_pars.trial.coords = coords;
-    in_pars.trial.rects = rects;
-
 
     % CREATING OUTPUT DIRECTORY 
     in_pars.output_dir = fullfile(pwd(),'Output', [Patient_Name, '_' ,datestr(datetime('now'), 'yyyymmdd-HHMM')]);

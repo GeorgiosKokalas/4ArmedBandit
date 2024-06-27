@@ -30,7 +30,7 @@ for trial = 1:n_trials
     % Simulate getting a reward for the chosen arm
     choice = cpu.getResponse();
     choice_index = find(cpu.Choice_List == choice);
-    reward = points(choice_index);
+    reward = points(choice_index+1);
     
     % Update CPU's knowledge with the reward
     cpu.updateRewards(choice, reward);

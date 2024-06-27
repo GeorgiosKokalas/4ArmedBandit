@@ -5,20 +5,20 @@
 
 function Experiment(Parameters)
     %% Do some precalculations
-    cpu_list = [CpuPlayer(1),CpuPlayer(2)];
+    cpu_list = [CpuPlayer(1), CpuPlayer(2)];
     
     % Find the number of blocks we will be having
-    num_blocks = length(Parameters.disbtl.player) * length(Parameters.disbtl.cpu) * length(cpu_list);
+    num_blocks = length(Parameters.disbtn.player) * length(Parameters.disbtn.cpu) * length(cpu_list);
     
     % Generate a list of all possible blocks
     [combos, combos_str] = deal([]);
     for cpu_idx = 1:width(cpu_list)
-        for dp_idx = 1:length(Parameters.disbtl.player)
-            dp_val = Parameters.disbtl.player(dp_idx);
-            for dc_idx = 1:length(Parameters.disbtl.cpu)
-                dc_val = Parameters.disbtl.cpu(dc_idx);
+        for dp_idx = 1:length(Parameters.disbtn.player)
+            dp_val = Parameters.disbtn.player(dp_idx);
+            for dc_idx = 1:length(Parameters.disbtn.cpu)
+                dc_val = Parameters.disbtn.cpu(dc_idx);
                 combos = [combos;sprintf('%d%d%d',cpu_idx,dp_idx,dc_idx)];
-                combos_str = [combos_str, string(sprintf("CPU-%d_%d-P_%d-C",cpu_idx,dp_val,dc_val))];
+                combos_str = [combos_str, string(sprintf("CPU-%d_%s-P_%s-C",cpu_idx,dp_val,dc_val))];
             end
         end
     end
@@ -40,22 +40,26 @@ function Experiment(Parameters)
     combos_str = combos_str(random_order);
     
     % Change to the directory that saves the data
-    cd(Parameters.trial.output_dir);
+    cd(Parameters.output_dir);
     
     %% Carry out the task
     % Carry out the Introduction to the task
     if Parameters.trial.show_intro
-        Introduction(Parameters.screen, Parameters.text);
+        Introduction(Parameters.screen, Parameters.text, Parameters.target);
     end
 
     % Carry out each block
     for block_idx = 1:num_blocks
+        % Create some variables needed for block storing
         table_name = combos_str(block_idx);
         block_total = struct('player', 0, 'cpu', 0);
-        button_scores = GetScores(length(Parameters.target.buttons), Parameters.target.score_change_rng, true);
+        button_scores = GetScores(length(Parameters.target.button_names), Parameters.target.score_change_rng, true);
+        cpu_idx = str2double(combos(block_idx,1));
+        disbtn = struct('player', Parameters.disbtn.player(str2double(combos(block_idx,2))), ...
+                        'cpu', Parameters.disbtn.cpu(str2double(combos(block_idx,3))));
         for trial_idx = 1:Parameters.trial.num
-            [pl_data, cpu_data] = RunTrial();
-            button_scores = GetScores(length(Parameters.target.buttons), Parameters.target.score_change_rng);
+            [pl_data, cpu_data, block_total] = RunTrial(Parameters, disbtn, button_scores, cpu_list(cpu_idx), block_total);
+            button_scores = GetScores(length(Parameters.target.button_names), Parameters.target.score_change_rng);
 
             pl_choices.(table_name)(trial_idx) = pl_data.choice;
             pl_scores.(table_name)(trial_idx)  = pl_data.score;
@@ -90,6 +94,10 @@ function Experiment(Parameters)
         delete(cpu_list(idx));
     end
     
+    DrawFormattedText(Parameters.screen.window, 'End', 'center', 'center');
+
+    % Update the Screen
+    Screen('Flip',Parameters.screen.window);
 
     % Debrief(Parameters.screen, [sum(prison_score_table), sum(hunt_score_table)], ["Prisoner Task", "Hunting Trip"]);
 

@@ -71,6 +71,12 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
 
 
     %in_pars.trial - VALUE EVALUATION
+    % Evaluating show_intro
+    if ~isscalar(in_pars.trial.show_intro) || ~islogical(in_pars.trial.show_intro)
+        disp("Inoperable value provided for in_pars.trial.show_. Applying default...");
+        in_pars.trial.duration_s = 20;
+    end
+
     % Evaluating duration_s
     if ~isnat(in_pars.trial.duration_s)
         disp("Inoperable value provided for in_pars.trial.duration_s. Applying default...");
@@ -83,20 +89,35 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
         in_pars.trial.cpu_wait_s = [2,4];
     end
 
+    % Evaluating num
+    if ~isnat(in_pars.trial.num)
+        disp("Inoperable value provided for in_pars.trial.num. Applying default...");
+        in_pars.trial.num = 5;
+    end
+
+    % Extra variables for in_pars.trial.cpu_wait_s
+    in_pars.trial.cpu_wait_dur = in_pars.trial.cpu_wait_s(2) - in_pars.trial.cpu_wait_s(1);
+
+
     %in_pars.target - VALUE EVALUATION
     button_names = ['Y', 'B', 'A', 'X'];
 
     % Evaluating target.radius
     smaller_dim = min(in_pars.screen.window_dims);
+    w_width = in_pars.screen.window_width;
+    w_height = in_pars.screen.window_height;
+    shorter_dist = min([sqrt( (w_width/4)^2 + (w_height/4)^2 ), w_width/2, w_height/ 2]);
     if ~isnat(in_pars.target.radius) || target.radius > smaller_dim/2 - 10
         if in_pars.target.radius == 0
             disp("Max option selected for in_pars.target.radius.");
-            in_pars.target.radius = smaller_dim/2 - 10;
+            in_pars.target.radius = shorter_dist/2 - 20;
         else
             disp("Inoperable value provided for in_pars.trial.cpu_wait_s. Applying default...")
-            in_pars.target.radius = smaller_dim/2 - 10;
+            in_pars.target.radius = shorter_dist/2 - 20;
         end
     end
+    in_pars.target.radius = max(20, in_pars.target.radius);
+   
 
     %Evaluating target.colors
     tch = height(in_pars.target.colors);
@@ -110,64 +131,64 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     end
 
     % Evaluating target.scores
-    if ~isnumlist(in_pars.target.scores, "nat") || length(in_pars.target.scores) ~= 4
-        disp("Inoperable value provided for in_pars.target.scores. Applying default...");
-        in_pars.target.scores = [7, 2, 4, 9];
-    end
-
-    % Evaluating target.player_block
-    pbl = length(in_pars.target.player_block);
-    change_pb = false;
-    if ~ischar(in_pars.target.player_block)
-        if ~isstring(in_pars.target.player_block); change_pb = true;
-        else; in_pars.target.player_block = char(in_pars.target.player_block);
-        end
-    end
-    for idx = 1:length(in_pars.target.player_block)
-        if ~contains(lower(button_names), lower(in_pars.target.player_block(idx)))
-            change_pb = true;
-            break;
-        end
-    end
-    if change_pb || ~isvector(in_pars.target.player_block)
-        disp("Inoperable value provided for in_pars.target.player_block. Applying default...");
-        in_pars.target.player_block = 'Y';
-    end
-
-    % Evaluating target.cpu_block
-    cbl = length(in_pars.target.cpu_block);
-    change_cb = false;
-    if ~ischar(in_pars.target.cpu_block)
-        if ~isstring(in_pars.target.cpu_block); change_cb = true;
-        else; in_pars.target.cpu_block = char(in_pars.target.cpu_block);
-        end
-    end
-    for idx = 1:cbl
-        if ~contains(lower(button_names), lower(in_pars.target.cpu_block(idx)))
-            change_cb = true;
-            break;
-        end
-    end
-    if change_cb || ~isvetor(in_pars.target.cpu_block) || cbl ~= pbl
-        disp("Inoperable value provided for in_pars.target.cpu_block. Applying default...");
-        in_pars.target.cpu_block = repmat('A', )
-    end
-    
+    if ~iswhole(in_pars.target.score_change_rng) || in_pars.target.score_change_rng > 100
+        disp("Inoperable value provided for in_pars.target.score_change_rng. Applying default...");
+        in_pars.target.score_change_rng = 30;
+    end   
 
     % extra variables for in_pars.trial
     x = in_pars.screen.window_width;
     y = in_pars.screen.window_height;
     r = in_pars.target.radius;
-    
     coords = [x/2, y/4; 3*x/4, y/2; x/2, 3*y/4; x/4, y/2];
     rects = zeros(4,4);
     for idx = 1:4
         rects(idx,:) = [coords(idx, 1)-r, coords(idx, 2)-r, coords(idx, 1)+r, coords(idx, 2)+r];
     end
-    in_pars.trial.button_names = button_names;
-    in_pars.trial.coords = coords;
-    in_pars.trial.rects = rects;
+    in_pars.target.button_names = button_names;
+    in_pars.target.coords = coords;
+    in_pars.target.rects = rects;
 
+
+
+    % in_pars.disbtn (disable buttons) - VALUE EVALUATION
+    % Evaluating disbtn.player
+    dpl = length(in_pars.disbtn.player);
+    change_pb = false;
+    if ~ischar(in_pars.disbtn.player)
+        if ~isstring(in_pars.disbtn.player); change_pb = true;
+        else; in_pars.disbtn.player = char(in_pars.disbtn.player);
+        end
+    end
+    for idx = 1:dpl
+        if ~contains(lower(button_names), lower(in_pars.disbtn.player(idx)))
+            change_pb = true;
+            break;
+        end
+    end
+    if change_pb || ~isvector(in_pars.disbtn.player)
+        disp("Inoperable value provided for in_pars.disbtn.player. Applying default...");
+        in_pars.disbtn.player = 'A';
+    end
+
+    % Evaluating disbtn.cpu
+    dcl = length(in_pars.disbtn.cpu);
+    change_cb = false;
+    if ~ischar(in_pars.disbtn.cpu)
+        if ~isstring(in_pars.disbtn.cpu); change_cb = true;
+        else; in_pars.disbtn.cpu = char(in_pars.disbtn.cpu);
+        end
+    end
+    for idx = 1:dcl
+        if ~contains(lower(button_names), lower(in_pars.disbtn.cpu(idx)))
+            change_cb = true;
+            break;
+        end
+    end
+    if change_cb || ~isvector(in_pars.disbtn.cpu) || dcl ~= dpl
+        disp("Inoperable value provided for in_pars.disbtn.cpu. Applying default...");
+        in_pars.disbtn.cpu = repmat('Y', 1, dpl);
+    end
 
     % CREATING OUTPUT DIRECTORY 
     in_pars.output_dir = fullfile(pwd(),'Output', [Patient_Name, '_' ,datestr(datetime('now'), 'yyyymmdd-HHMM')]);
