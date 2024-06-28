@@ -1,5 +1,5 @@
 % Initialize parameters
-n_trials = 50;
+n_trials = 25;
 change_prob = 1/20;
 
 % Initialize CpuPlayer

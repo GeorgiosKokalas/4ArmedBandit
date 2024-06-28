@@ -20,8 +20,9 @@ classdef CpuPlayer < handle
         function obj = CpuPlayer(behavior_mode, choice_list, next_choice)
             if ~exist("behavior_mode", "var"); behavior_mode = 1; end
             if ~exist("choice_list", "var"); choice_list = ['A', 'B', 'X']; end
-            if ~exist("next_choice", "var"); next_choice = 'A'; end
-            if ~exist("epsilon", "var"); epsilon = 0.1; end
+            % if ~exist("next_choice", "var"); next_choice = 'A'; end
+            if ~exist("next_choice", "var"); next_choice = choice_list(randi(length(choice_list))); end
+            if ~exist("epsilon", "var"); epsilon = 0.4; end
             
             obj.Behavior_Mode = behavior_mode;
             obj.Choice_List = choice_list;
@@ -30,8 +31,7 @@ classdef CpuPlayer < handle
             obj.Counts = zeros(1, length(choice_list));
             obj.Next_Choice = next_choice;
             obj.Choice_Origins = next_choice;
-            % Something that is adding up the points for the each of the
-            % choices?
+            
         end
         
         function changeBehavior(obj, varargin)           %changeBehavior(obj)
@@ -42,7 +42,7 @@ classdef CpuPlayer < handle
                 % Update rewards and counts
                 obj.updateRewards(choice, points);
             end
-            %cpu1.changeBehavior(points, cpu1.Next_Choice);
+            
             switch obj.Behavior_Mode
                 case 1
                     % Epsilon Greedy
