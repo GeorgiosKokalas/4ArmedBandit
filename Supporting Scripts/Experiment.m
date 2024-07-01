@@ -5,8 +5,8 @@
 
 function Experiment(Parameters)
     %% Do some precalculations
-    cpu_list = [CpuPlayer(1), CpuPlayer(2)];
-    
+    %cpu_list = [CpuPlayer(1), CpuPlayer(2)];
+    cpu_list = [CpuPlayerT(1), CpuPlayerT(2)];
     % Find the number of blocks we will be having
     num_blocks = length(Parameters.disbtn.player) * length(Parameters.disbtn.cpu) * length(cpu_list);
     
@@ -57,8 +57,12 @@ function Experiment(Parameters)
         cpu_idx = str2double(combos(block_idx,1));
         disbtn = struct('player', Parameters.disbtn.player(str2double(combos(block_idx,2))), ...
                         'cpu', Parameters.disbtn.cpu(str2double(combos(block_idx,3))));
+        
+
         for trial_idx = 1:Parameters.trial.num
+            %cpu_list(cpu_idx).changeBehavior(button_scores, cpu_data.choice);
             [pl_data, cpu_data, block_total] = RunTrial(Parameters, disbtn, button_scores, cpu_list(cpu_idx), block_total);
+            %check this 
             button_scores = GetScores(length(Parameters.target.button_names), Parameters.target.score_change_rng);
 
             pl_choices.(table_name)(trial_idx) = pl_data.choice;
