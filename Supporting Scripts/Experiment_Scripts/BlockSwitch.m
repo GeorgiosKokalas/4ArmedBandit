@@ -1,9 +1,10 @@
-function BlockSwitch(Win, Trial_Idx, Trial_Num)
+function BlockSwitch(Win, Trial_Idx, Trial_Num, Text_Size)
     if Trial_Idx == Trial_Num; return; end
 
     text = sprintf('Block %d Complete! %d more to go!\n\n\n', Trial_Idx, Trial_Num-Trial_Idx);
     text = sprintf('%sPress any button to continue.', text);
-
+    
+    Screen('TextSize', Win, Text_Size);
     DrawFormattedText(Win, text, 'center', 'center', 252:255);
     
     Screen('Flip', Win);

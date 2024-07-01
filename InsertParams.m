@@ -31,18 +31,21 @@ function in_pars = InsertParams(Patient_Name)
     in_pars.text.size.default = 40;                 % Integer - Determines the default text size
     in_pars.text.size.intro = 45;
     in_pars.text.size.score_count = 50;
+    in_pars.text.size.button_score = 200;
+    in_pars.text.size.title = 20;
+    in_pars.text.size.scores = 50;
 
     in_pars.trial.show_intro = true;
     in_pars.trial.duration_s = 20;                  % Positive integer - Determines how long someone has to provide an answer
     in_pars.trial.cpu_wait_s = [2, 4];              % Vector of 2 whole numbers - Determines how long the player waits for the opponent input
-    in_pars.trial.num = 2;
+    in_pars.trial.num = 1;
 
-    in_pars.target.radius = 0;                % Positive integer - Give 0 for max radius
+    in_pars.target.radius_percent = 90;                % Positive integer - Give 0 for max radius
     in_pars.target.colors = [color_list.yellow * 0.8;...
                              color_list.red    * 0.8;...
                              color_list.green  * 0.8;...
                              color_list.blue   * 0.8];  % 4 RGBA values
-    in_pars.target.score_change_rng = 30;     % Vector of 4 Positive integers 1-10
+    in_pars.target.score_change_rng = 5;     % Vector of 4 Positive integers 1-10
     
     in_pars.disbtn.player = 'A';
     in_pars.disbtn.cpu = 'Y';

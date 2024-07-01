@@ -92,7 +92,7 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     % Evaluating num
     if ~isnat(in_pars.trial.num)
         disp("Inoperable value provided for in_pars.trial.num. Applying default...");
-        in_pars.trial.num = 5;
+        in_pars.trial.num = 0;
     end
 
     % Extra variables for in_pars.trial.cpu_wait_s
@@ -102,22 +102,12 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     %in_pars.target - VALUE EVALUATION
     button_names = ['Y', 'B', 'A', 'X'];
 
-    % Evaluating target.radius
-    smaller_dim = min(in_pars.screen.window_dims);
-    w_width = in_pars.screen.window_width;
-    w_height = in_pars.screen.window_height;
-    shorter_dist = min([sqrt( (w_width/4)^2 + (w_height/4)^2 ), w_width/2, w_height/ 2]);
-    if ~isnat(in_pars.target.radius) || target.radius > smaller_dim/2 - 10
-        if in_pars.target.radius == 0
-            disp("Max option selected for in_pars.target.radius.");
-            in_pars.target.radius = shorter_dist/2 - 20;
-        else
-            disp("Inoperable value provided for in_pars.trial.cpu_wait_s. Applying default...")
-            in_pars.target.radius = shorter_dist/2 - 20;
-        end
+    % Evaluating target.radius_percent
+    if ~isnat(in_pars.target.radius_percent) || in_pars.target.radius_percent > 100
+        disp("Inoperable value provided for in_pars.trial.cpu_wait_s. Applying default...")
+        in_pars.target.radius_percent = 100;
     end
-    in_pars.target.radius = max(20, in_pars.target.radius);
-   
+ 
 
     %Evaluating target.colors
     tch = height(in_pars.target.colors);
@@ -136,7 +126,12 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
         in_pars.target.score_change_rng = 30;
     end   
 
-    % extra variables for in_pars.trial
+    % extra variables for in_pars.target
+    w_width = in_pars.screen.window_width;
+    w_height = in_pars.screen.window_height;
+    shorter_dist = min([sqrt( (w_width/4)^2 + (w_height/4)^2 ), w_width/2, w_height/ 2]);
+    in_pars.target.radius = max(20, (shorter_dist/2)*(in_pars.target.radius_percent/100));
+
     x = in_pars.screen.window_width;
     y = in_pars.screen.window_height;
     r = in_pars.target.radius;

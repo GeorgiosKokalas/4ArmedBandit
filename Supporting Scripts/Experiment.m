@@ -5,8 +5,9 @@
 
 function Experiment(Parameters)
     %% Do some precalculations
-    %cpu_list = [CpuPlayer(1), CpuPlayer(2)];
-    cpu_list = [CpuPlayerT(1), CpuPlayerT(2)];
+    cpu_list = [CpuPlayer(2)];
+    [Parameters.avatars.player , Parameters.avatars.cpu] = deal(1);
+
     % Find the number of blocks we will be having
     num_blocks = length(Parameters.disbtn.player) * length(Parameters.disbtn.cpu) * length(cpu_list);
     
@@ -45,7 +46,7 @@ function Experiment(Parameters)
     %% Carry out the task
     % Carry out the Introduction to the task
     if Parameters.trial.show_intro
-        Introduction(Parameters.screen, Parameters.text, Parameters.target);
+        Parameters.avatars.player = Introduction(Parameters.screen, Parameters.text, Parameters.target);
     end
 
     % Carry out each block
@@ -73,7 +74,7 @@ function Experiment(Parameters)
             cpu_scores.(table_name)(trial_idx)  = cpu_data.score;   
             
         end
-        BlockSwitch(Parameters.screen.window,block_idx, num_blocks);
+        BlockSwitch(Parameters.screen.window,block_idx, num_blocks, Parameters.text.size.intro);
 
         pl_totals.(table_name) = block_total.player;
         cpu_totals.(table_name) = block_total.player;

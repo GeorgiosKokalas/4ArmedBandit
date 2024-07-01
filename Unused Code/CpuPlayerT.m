@@ -13,11 +13,12 @@ classdef CpuPlayerT < handle
         Epsilon         % Sets the epsilon value for e-greedy algo
         Rewards         % Rewards received
         Counts          % Counts per choice
+        Behaviors       % A struct of behavior functions
     end
 
     methods
         % Constructor, this sets up default mode
-        function obj = CpuPlayer(behavior_mode, choice_list, next_choice)
+        function obj = CpuPlayer(behavior_mode, choice_list, next_choice, epsilon)
             if ~exist("behavior_mode", "var"); behavior_mode = 1; end
             if ~exist("choice_list", "var"); choice_list = ['A', 'B', 'X']; end
             if ~exist("next_choice", "var"); next_choice = choice_list(randi(length(choice_list))); end
@@ -29,48 +30,47 @@ classdef CpuPlayerT < handle
             obj.Rewards = zeros(1, length(choice_list));
             obj.Counts = zeros(1, length(choice_list));
             obj.Next_Choice = next_choice;
-            obj.Choice_Origins = next_choice; % i guess this instantiates the choice, which is now random
+            obj.Choice_Origins = next_choice;
 
+            % Initialize behavior functions
             obj.Behaviors = struct(...
-                'epsilonGreedy', @obj.epsilonGreedyBehavior,...
-                'randomChoice', @obj.randomChoiceBehavior...
-                );
-            
+                'epsilonGreedy', @obj.epsilonGreedyBehavior, ...
+                'randomChoice', @obj.randomChoiceBehavior ...
+            );
         end
-    end
         
-        function changeBehavior(obj, varargin)           %changeBehavior(obj)
-            % varargin can contain the points and choice made
+        % General method to change behavior
+        function changeBehavior(obj, varargin)
             if ~isempty(varargin)
                 points = varargin{1};
                 choice = varargin{2};
                 obj.updateRewards(choice, points);
-               
             end
-            % Calling the desired behavior
-            behaviorFn=obj.getBehaviorFunction();
-            obj.Next_Choice=behaviorFn;
-
+            % Call the appropriate behavior function
+            behaviorFn = obj.getBehaviorFunction();
+            obj.Next_Choice = behaviorFn();
         end
-            
-        function nextChoice =epsilonGreedyBehavior(obj)
-            if rand()<obj.Epsilon
+        
+        % Epsilon Greedy Behavior
+        function nextChoice = epsilonGreedyBehavior(obj)
+            if rand() < obj.Epsilon
                 nextChoice = obj.Choice_List(randi(length(obj.Choice_List)));
             else
-                [~, best_index]= max(obj.Rewards./max(1,obj.Counts));
+                [~, best_index] = max(obj.Rewards ./ max(1, obj.Counts));
                 nextChoice = obj.Choice_List(best_index);
-
             end
         end
-         
+        
+        % Random Choice Behavior
         function nextChoice = randomChoiceBehavior(obj)
             nextChoice = obj.Choice_List(randi(length(obj.Choice_List)));
         end
-       
-         % Method that gives the cpu's response
+        
+        % Method that gives the CPU's response
         function choice = getResponse(obj)
             choice = obj.Next_Choice;
         end
+        
         % Method that updates choices and rewards
         function updateRewards(obj, choice, reward)
             choice_index = find(obj.Choice_List == choice, 1);
@@ -79,24 +79,27 @@ classdef CpuPlayerT < handle
                 obj.Counts(choice_index) = obj.Counts(choice_index) + 1;
             end
         end
-      % Resets the CPU after every block
+        
+        % Resets the CPU after every block
         function reset(obj)
             obj.Next_Choice = obj.Choice_Origins;
             obj.Rewards = zeros(1, length(obj.Choice_List));
             obj.Counts = zeros(1, length(obj.Choice_List));
         end
 
-        methods (Access = private)
-                % Method to get the behavior function handle
-                function behaviorFn = getBehaviorFunction(obj)
-                    switch obj.Behavior_Mode
-                        case 1
-                            behaviorFn = obj.Behaviors.epsilonGreedy;
-                        case 2
-                            behaviorFn = obj.Behaviors.randomChoice;
-                        otherwise
-                            error('Unknown behavior mode');
-                    end
-                end        
+    end
+    
+    methods (Access = private)
+        % Method to get the behavior function handle
+        function behaviorFn = getBehaviorFunction(obj)
+            switch obj.Behavior_Mode
+                case 1
+                    behaviorFn = obj.Behaviors.epsilonGreedy;
+                case 2
+                    behaviorFn = obj.Behaviors.randomChoice;
+                otherwise
+                    error('Unknown behavior mode');
+            end
+        end
     end
 end
