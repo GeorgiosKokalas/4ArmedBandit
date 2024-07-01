@@ -5,7 +5,7 @@
 
 function Experiment(Parameters)
     %% Do some precalculations
-    cpu_list = [CpuPlayer(2)];
+    cpu_list = [CpuPlayer(1), CpuPlayer(2)];
     
     % Find the number of blocks we will be having
     num_blocks = length(Parameters.disbtn.player) * length(Parameters.disbtn.cpu) * length(cpu_list);
@@ -44,18 +44,21 @@ function Experiment(Parameters)
     
     %% Carry out the task
     % Carry out the Introduction to the task
-    % if Parameters.trial.show_intro
-    %     Introduction(Parameters.screen, Parameters.text);
-    % end
+    if Parameters.trial.show_intro
+        Introduction(Parameters.screen, Parameters.text, Parameters.target);
+    end
 
     % Carry out each block
     for block_idx = 1:num_blocks
+        % Create some variables needed for block storing
         table_name = combos_str(block_idx);
         block_total = struct('player', 0, 'cpu', 0);
         button_scores = GetScores(length(Parameters.target.button_names), Parameters.target.score_change_rng, true);
         cpu_idx = str2double(combos(block_idx,1));
+        disbtn = struct('player', Parameters.disbtn.player(str2double(combos(block_idx,2))), ...
+                        'cpu', Parameters.disbtn.cpu(str2double(combos(block_idx,3))));
         for trial_idx = 1:Parameters.trial.num
-            [pl_data, cpu_data] = RunTrial(Parameters, button_scores, cpu_list(cpu_idx));
+            [pl_data, cpu_data, block_total] = RunTrial(Parameters, disbtn, button_scores, cpu_list(cpu_idx), block_total);
             button_scores = GetScores(length(Parameters.target.button_names), Parameters.target.score_change_rng);
 
             pl_choices.(table_name)(trial_idx) = pl_data.choice;
@@ -91,7 +94,7 @@ function Experiment(Parameters)
         delete(cpu_list(idx));
     end
     
-    DrawFormattedText(Parameters.screen.window, 'Bye-Bye', 'center', 'center');
+    DrawFormattedText(Parameters.screen.window, 'End', 'center', 'center');
 
     % Update the Screen
     Screen('Flip',Parameters.screen.window);

@@ -16,7 +16,7 @@ classdef CpuPlayer < handle
     end
 
     methods
-        % Constructor
+        % Constructor, this sets up default mode
         function obj = CpuPlayer(behavior_mode, choice_list, next_choice)
             if ~exist("behavior_mode", "var"); behavior_mode = 1; end
             if ~exist("choice_list", "var"); choice_list = ['A', 'B', 'X']; end
@@ -47,8 +47,7 @@ classdef CpuPlayer < handle
                 case 1
                     % Epsilon Greedy
                     if rand() < obj.Epsilon
-                        % Choose a random action with probability epsilon,
-                        % aka choose a random arm
+                        % Choose a random arm with probability epsilon
                         obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List)));
                     else
                         % Choose the best-known action with probability 1 -
