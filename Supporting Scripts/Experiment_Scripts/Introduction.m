@@ -34,7 +34,7 @@ function player_avatar = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
     %% CHARACTER SELECTION
      break_loop = false;
      controls_message = ['Please select your avatar.\n',... 
-                         'Use the left joystick or Dpad to navigate\n',...
+                         'Use the Dpad to navigate\n',...
                          'Press A to make your selection'];
 
      % Create a matrix for all 6 image rects
@@ -66,26 +66,26 @@ function player_avatar = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
         Screen('Flip', Screen_Pars.window);
 
         % Wait for the XBox Controller signal   
-        pl_i = GetXBox()
+        pl_i = GetXBox();
         
         % Navigate the Images using the DPad
         try
             [new_img_y, new_img_x] = find(img_map == sel_img);
-            if pl_i.DPadDown || (pl_i.JoystickLY < 0 && pl_i.JoystickLY < pl_i.JoystickLX)
+            if pl_i.DPadDown %|| (pl_i.JoystickLY < 0 && pl_i.JoystickLY < pl_i.JoystickLX)
                 new_img_y = new_img_y + 1;
-            elseif pl_i.DPadUp || (pl_i.JoystickLY > 0 && pl_i.JoystickLY > pl_i.JoystickLX)
+            elseif pl_i.DPadUp %|| (pl_i.JoystickLY > 0 && pl_i.JoystickLY > pl_i.JoystickLX)
                 new_img_y = new_img_y - 1;
-            elseif pl_i.DPadRight || (pl_i.JoystickLX > 0 && pl_i.JoystickLX > pl_i.JoystickLY)  
+            elseif pl_i.DPadRight %|| (pl_i.JoystickLX > 0 && pl_i.JoystickLX > pl_i.JoystickLY)  
                 new_img_x = new_img_x + 1;
-            elseif pl_i.DPadLeft || (pl_i.JoystickLX < 0 && pl_i.JoystickLX < pl_i.JoystickLY)
+            elseif pl_i.DPadLeft % || (pl_i.JoystickLX < 0 && pl_i.JoystickLX < pl_i.JoystickLY)
                 new_img_x = new_img_x - 1;
             end
             disp([new_img_x, new_img_y]);
             sel_img = img_map(new_img_y, new_img_x);
             disp(sel_img);
-        catch ME
-            disp(ME)
-            disp('error');
+        catch
+        %     disp(ME)
+        %     disp('error');
         end
         
         if pl_i.A; break; end

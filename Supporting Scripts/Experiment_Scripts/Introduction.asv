@@ -71,13 +71,13 @@ function player_avatar = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
         % Navigate the Images using the DPad
         try
             [new_img_y, new_img_x] = find(img_map == sel_img);
-            if pl_i.DPadDown || (pl_i.JoystickLX < 0 && pl.Joy)
+            if pl_i.DPadDown || (pl_i.JoystickLY < 0 && pl_i.JoystickLY < pl_i.JoystickLX)
                 new_img_y = new_img_y + 1;
-            elseif pl_i.DPadUp
+            elseif pl_i.DPadUp || (pl_i.JoystickLY > 0 && pl_i.JoystickLY > pl_i.JoystickLX)
                 new_img_y = new_img_y - 1;
-            elseif pl_i.DPadRight
+            elseif pl_i.DPadRight || (pl_i.JoystickLX > 0 && pl_i.JoystickLX > pl_i.JoystickLY)  
                 new_img_x = new_img_x + 1;
-            elseif pl_i.DPadLeft
+            elseif pl_i.DPadLeft || (pl_i.JoystickLX < 0 && pl_i.JoystickLX < pl_i.JoystickLY)
                 new_img_x = new_img_x - 1;
             end
             disp([new_img_x, new_img_y]);
@@ -89,7 +89,7 @@ function player_avatar = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
         end
         
         if pl_i.A; break; end
-        WaitSecs(0.1);
+        WaitSecs(0.2);
      end
     player_avatar = sel_img;
 

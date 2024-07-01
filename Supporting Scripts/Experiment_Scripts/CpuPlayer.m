@@ -9,20 +9,29 @@ classdef CpuPlayer < handle
         Behavior_Mode   % Mode of Behavior, each mode interprets and reacts to the player's actions differently 
         Choice_List     % The list of choices that we have   
         Next_Choice     % The choice that will be made next by the Cpu
+        Prev_Choice     % The most recent choice made by the current Cpu
         Choice_Origins  % The start choice that we define
         Epsilon         % Sets the epsilon value for e-greedy algo
         Rewards         % Rewards received
         Counts          % Counts per choice
+        Behaviors       % A struct of behavior functions
     end
 
     methods
         % Constructor, this sets up default mode
-        function obj = CpuPlayer(behavior_mode, choice_list, next_choice)
-            if ~exist("behavior_mode", "var"); behavior_mode = 1; end
-            if ~exist("choice_list", "var"); choice_list = ['A', 'B', 'X']; end
-            % if ~exist("next_choice", "var"); next_choice = 'A'; end
-            if ~exist("next_choice", "var"); next_choice = choice_list(randi(length(choice_list))); end
-            if ~exist("epsilon", "var"); epsilon = 0.4; end
+        function obj = CpuPlayer(behavior_mode, choice_list, next_choice, epsilon)
+            if ~exist("behavior_mode", "var") || isempty(behavior_mode)
+                behavior_mode = 1; 
+            end
+            if ~exist("choice_list", "var") || isempty(choice_list)
+                choice_list = ['A', 'B', 'X']; 
+            end
+            if ~exist("next_choice", "var")  || isempty(next_choice)
+                next_choice = choice_list(randi(length(choice_list))); 
+            end
+            if ~exist("epsilon", "var") || isempty(epsilon) 
+                epsilon = 0.4; 
+            end
             
             obj.Behavior_Mode = behavior_mode;
             obj.Choice_List = choice_list;
@@ -31,52 +40,63 @@ classdef CpuPlayer < handle
             obj.Counts = zeros(1, length(choice_list));
             obj.Next_Choice = next_choice;
             obj.Choice_Origins = next_choice;
-            
+            obj.Prev_Choice = next_choice;
         end
         
-        function changeBehavior(obj, varargin)           %changeBehavior(obj)
-            % varargin can contain the points and choice made
-            if ~isempty(varargin)
-                points = varargin{1};
-                choice = varargin{2};
-                % Update rewards and counts
-                obj.updateRewards(choice, points);
-            end
-            
-            switch obj.Behavior_Mode
-                case 1
-                    % Epsilon Greedy
-                    if rand() < obj.Epsilon
-                        % Choose a random arm with probability epsilon
-                        obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List)));
-                    else
-                        % Choose the best-known action with probability 1 -
-                        % epsilon, aka choose the arm with the highest
-                        % average rewards
-                        [~, best_index] = max(obj.Rewards ./ max(1, obj.Counts));
-                        obj.Next_Choice = obj.Choice_List(best_index);
-                    end
+        % General method to change behavior
+        function changeBehavior(obj, points)
+            obj.updateRewards(points); % Update the memory of the choices that we made
 
+            switch obj.Behavior_Mode  % Different functions based on behaviors
+                case 1
+                    obj.epsilonGreedyBehavior();
                 case 2
-                    % Random choice
-                    obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List)));
+                    obj.randomChoiceBehavior();
+                otherwise
+                    error('Unknown behavior mode');
             end
+        end        
+        
+        % Method that gives the CPU's response
+        function choice = getResponse(obj)
+            choice = obj.Next_Choice;
+            obj.Prev_Choice = choice;
         end
-         % Method that gives the cpu's response
-        function Choice = getResponse(obj)
-            Choice = obj.Next_Choice;
-        end
-        % Method that updates choices and rewards
-        function updateRewards(obj, choice, reward)
-            choice_index = find(obj.Choice_List == choice);
-            obj.Rewards(choice_index) = obj.Rewards(choice_index) + reward;
-            obj.Counts(choice_index) = obj.Counts(choice_index) + 1;
-        end  
+        
         % Resets the CPU after every block
-         function reset(obj)
+        function reset(obj)
             obj.Next_Choice = obj.Choice_Origins;
             obj.Rewards = zeros(1, length(obj.Choice_List));
             obj.Counts = zeros(1, length(obj.Choice_List));
+        end
+
+    end
+    
+    % Methods used by the class internally
+    methods (Access = private)
+        % Method that updates choices and rewards
+        function updateRewards(obj, reward)
+            choice_index = find(obj.Choice_List == obj.Prev_Choice, 1);
+            if ~isempty(choice_index)
+                obj.Rewards(choice_index) = obj.Rewards(choice_index) + reward;
+                obj.Counts(choice_index) = obj.Counts(choice_index) + 1;
+            end
+        end
+        
+        %% Behavioral Functions
+        % Epsilon Greedy Behavior
+        function epsilonGreedyBehavior(obj)
+            if rand() < obj.Epsilon
+                obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List)));
+            else
+                [~, best_index] = max(obj.Rewards ./ max(1, obj.Counts));
+                obj.Next_Choice = obj.Choice_List(best_index);
+            end
+        end
+        
+        % Random Choice Behavior
+        function randomChoiceBehavior(obj)
+            obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List)));
         end
     end
 end

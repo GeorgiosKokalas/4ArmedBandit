@@ -89,7 +89,7 @@ function [pl_score, pl_time, pl_choice, Totals] = player_turn(Screen_Pars, Targ_
             if show_score
                 Screen('TextSize', Screen_Pars.window, Text_Size.button_score);
                 DrawFormattedText(Screen_Pars.window, num2str(score), Targ_Pars.coords(button_idx, 1) - Text_Size.button_score/2, ...
-                                  Targ_Pars.coords(button_idx, 2) + Text_Size.button_score/2, color_list.white);
+                                  Targ_Pars.coords(button_idx, 2) + Text_Size.button_score/2, color_list.black);
             else
                 DrawIcon(Screen_Pars.window, ['Letter_', Targ_Pars.button_names(button_idx), '.png'],...
                          Targ_Pars.rects(button_idx,:));
@@ -111,7 +111,7 @@ function [pl_score, pl_time, pl_choice, Totals] = player_turn(Screen_Pars, Targ_
     pl_time = elapsed_time;
     pl_score = score;
     pl_choice = choice;
-    WaitSecs(2);
+    WaitSecs(1);
 end
 
 
@@ -141,7 +141,7 @@ function [cpu_score, cpu_choice, Totals] = cpu_turn(Screen_Pars, Targ_Pars, Tria
     score_idx = Targ_Pars.button_names == cpu_choice;
     cpu_score = Button_Scores(score_idx);
     Totals.cpu = Totals.cpu + cpu_score;
-    Cpu.changeBehavior();
+    Cpu.changeBehavior(cpu_score);
     
     WaitSecs(cpu_time);
     
@@ -164,7 +164,7 @@ function [cpu_score, cpu_choice, Totals] = cpu_turn(Screen_Pars, Targ_Pars, Tria
         if show_score
             Screen('TextSize', Screen_Pars.window, Text_Size.button_score);
             DrawFormattedText(Screen_Pars.window, num2str(cpu_score), Targ_Pars.coords(button_idx, 1) - Text_Size.button_score/2, ...
-                              Targ_Pars.coords(button_idx, 2) + Text_Size.button_score/2, color_list.white);
+                              Targ_Pars.coords(button_idx, 2) + Text_Size.button_score/2, color_list.black);
         else
             DrawIcon(Screen_Pars.window, ['Letter_', Targ_Pars.button_names(button_idx), '.png'],...
                      Targ_Pars.rects(button_idx,:));
@@ -176,7 +176,7 @@ function [cpu_score, cpu_choice, Totals] = cpu_turn(Screen_Pars, Targ_Pars, Tria
     end
 
     Screen('Flip', Screen_Pars.window);
-    WaitSecs(2);
+    WaitSecs(1);
 end
 
 % function that draws the player and Cpu's avatars

@@ -5,7 +5,7 @@
 
 function Experiment(Parameters)
     %% Do some precalculations
-    cpu_list = [CpuPlayer(2)];
+    cpu_list = [CpuPlayer(1)];
     [Parameters.avatars.player , Parameters.avatars.cpu] = deal(1);
 
     % Find the number of blocks we will be having
@@ -99,7 +99,7 @@ function Experiment(Parameters)
         delete(cpu_list(idx));
     end
     
-    DrawFormattedText(Parameters.screen.window, 'End', 'center', 'center');
+    DrawFormattedText(Parameters.screen.window, 'End', 'center', 'center', 252:255);
 
     % Update the Screen
     Screen('Flip',Parameters.screen.window);
