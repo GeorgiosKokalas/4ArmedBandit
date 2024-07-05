@@ -5,7 +5,7 @@
 
 function Experiment(Parameters)
     %% Do some precalculations
-    cpu_list = [CpuPlayer(1)];
+    cpu_list = [CpuPlayer(1), CpuPlayer(2)];
     [Parameters.avatars.player , Parameters.avatars.cpu] = deal(1);
 
     % Find the number of blocks we will be having
@@ -34,7 +34,8 @@ function Experiment(Parameters)
     [pl_totals, cpu_totals] = deal(table('Size', [1, num_blocks],...
                                          'VariableTypes', repmat("double", 1, num_blocks), ...
                                          'VariableNames',combos_str));
-
+    exp_events = {};
+    
     % Randomize the blocks
     random_order = randperm(num_blocks);
     combos = combos(random_order, :);
@@ -46,7 +47,8 @@ function Experiment(Parameters)
     %% Carry out the task
     % Carry out the Introduction to the task
     if Parameters.trial.show_intro
-        Parameters.avatars.player = Introduction(Parameters.screen, Parameters.text, Parameters.target);
+        [Parameters.avatars.player, intro_events] = Introduction(Parameters.screen, Parameters.text, Parameters.target);
+        exp_events = [exp_events; intro_events];
     end
 
     % Carry out each block
@@ -54,16 +56,18 @@ function Experiment(Parameters)
         % Create some variables needed for block storing
         table_name = combos_str(block_idx);
         block_total = struct('player', 0, 'cpu', 0);
+        block_events = {"Block_Start", GetSecs()};
         button_scores = GetScores(length(Parameters.target.button_names), Parameters.target.score_change_rng, true);
         cpu_idx = str2double(combos(block_idx,1));
         disbtn = struct('player', Parameters.disbtn.player(str2double(combos(block_idx,2))), ...
                         'cpu', Parameters.disbtn.cpu(str2double(combos(block_idx,3))));
         
+        BlockStart(Parameters.screen.window,block_idx, num_blocks, Parameters.text.size.intro);
 
         for trial_idx = 1:Parameters.trial.num
             %cpu_list(cpu_idx).changeBehavior(button_scores, cpu_data.choice);
-            [pl_data, cpu_data, block_total] = RunTrial(Parameters, disbtn, button_scores, cpu_list(cpu_idx), block_total);
-            %check this 
+            [pl_data, cpu_data, block_total, trial_events] = RunTrial(Parameters, disbtn, button_scores, cpu_list(cpu_idx), block_total);
+            block_events = [block_events; trial_events];
             button_scores = GetScores(length(Parameters.target.button_names), Parameters.target.score_change_rng);
 
             pl_choices.(table_name)(trial_idx) = pl_data.choice;
@@ -86,13 +90,14 @@ function Experiment(Parameters)
         block_pl_times    = pl_times.(table_name);
         block_cpu_scores  = cpu_scores.(table_name);
         block_cpu_choices = cpu_choices.(table_name);
+        exp_events = [exp_events; block_events];
 
         save(block_filename, "block_pl_choices", "block_pl_scores", "block_pl_times", ...
-            "block_cpu_scores", "block_cpu_choices", "block_total", "-mat");
+            "block_cpu_scores", "block_cpu_choices", "block_total", "block_events", "-mat");
     end
     
     save("All_Blocks.mat", "pl_choices", "pl_scores", "pl_times", "cpu_scores", ...
-         "cpu_choices", "pl_totals", "cpu_totals", "-mat");
+         "cpu_choices", "pl_totals", "cpu_totals", "exp_events", "-mat");
 
     % Cleanup
     for idx = length(cpu_list):-1:1
@@ -105,5 +110,39 @@ function Experiment(Parameters)
     Screen('Flip',Parameters.screen.window);
 
     % Debrief(Parameters.screen, [sum(prison_score_table), sum(hunt_score_table)], ["Prisoner Task", "Hunting Trip"]);
+end
 
+function BlockStart(Win, Block_Idx, Num_Blocks, Text_Size)
+    text = sprintf('Starting Block %d out of %d.\n\n\n', Block_Idx, Num_Blocks);
+    text = sprintf('%sPress any button to continue.', text);
+    
+    Screen('TextSize', Win, Text_Size);
+    DrawFormattedText(Win, text, 'center', 'center', 252:255);
+    
+    Screen('Flip', Win);
+
+    start = GetSecs();
+    while GetSecs()-start < 2
+        if KbCheck() || GetXBox().AnyButton; break; end
+    end
+    WaitSecs(0.3);
+end
+
+
+function BlockSwitch(Win, Block_Idx, Num_Blocks, Text_Size)
+    if Block_Idx == Num_Blocks; return; end
+
+    text = sprintf('Block %d Complete! %d more to go!\n\n\n', Block_Idx, Num_Blocks-Block_Idx);
+    text = sprintf('%sPress any button to continue.', text);
+    
+    Screen('TextSize', Win, Text_Size);
+    DrawFormattedText(Win, text, 'center', 'center', 252:255);
+    
+    Screen('Flip', Win);
+
+    start = GetSecs();
+    while GetSecs()-start < 2
+        if KbCheck() || GetXBox().AnyButton; break; end
+    end
+    WaitSecs(0.3);
 end

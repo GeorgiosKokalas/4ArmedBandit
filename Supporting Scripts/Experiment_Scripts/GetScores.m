@@ -20,7 +20,7 @@ function Button_Scores = GetScores(N_Arms, Change_Rng, Initialize)
         % Update the means of the arms based on the given probability
         for arm = 1:N_Arms
             % 1 in 20 chance to change the mean of the arm
-            if rand() < Change_Rng
+            if rand() < Change_Rng/100
                 means(arm) = floor(5 + (95-5) * rand());
             end
         end
