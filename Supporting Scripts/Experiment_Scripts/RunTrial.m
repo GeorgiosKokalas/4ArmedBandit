@@ -15,11 +15,13 @@
 function [player_data, cpu_data, Totals, trial_events] = RunTrial(Parameters, Disbtn, Button_Scores, Cpu, Totals, Block_Idx, Trial_Idx)
     %% PRE STAGE - Before the timer of the activity starts
     % Initialize some of the variables we need for storing
+    
     % [pl_score, cpu_score] = deal(0);
     % [pl_choice, cpu_choice] = deal('Void');
     % pl_time = -1;
     % trial_events = {};
     pd_s = Parameters.trial.photodiode_dur_s;
+
 
     %% PRESENTATION STAGE - The trial begins    
     % Flip a coin on who starts first
