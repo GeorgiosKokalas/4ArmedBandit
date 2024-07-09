@@ -1,0 +1,47 @@
+function Button_CScores = GetCScores(N_Arms, Change_Rng, Initialize)
+    persistent means std_devs correlation_matrix
+
+    if ~exist("Initialize", "var"); Initialize = false; end
+
+    if Initialize || isempty(means) || isempty(std_devs) || isempty(correlation_matrix)
+        % Initialize means and standard deviations for the arms
+        means = floor(5 + (95-5) * rand(1, N_Arms));   % Random means between 5 and 95
+        std_devs = randi([1, 3], 1, N_Arms);    % Random std devs chosen from 1, 2, or 3
+        
+        % Define the correlation matrix for the arms
+        % Arms 1 and 2 are correlated, arms 3 and 4 are independent
+        correlation_matrix = eye(N_Arms);
+        correlation_matrix(1, 2) = 0.8; % Correlation between arm 1 and arm 2
+        correlation_matrix(2, 1) = 0.8; % Symmetric correlation
+    else
+        % Update the means of the arms based on the given probability
+        for arm = 1:N_Arms
+            % 1 in 20 chance to change the mean of the arm
+            if rand() < Change_Rng
+                means(arm) = floor(5 + (95-5) * rand());
+            end
+        end
+    end
+
+    % Generate rewards
+    rewards = zeros(1, N_Arms);
+    for arm = 1:N_Arms
+        if arm == 1
+            % Arm 1
+            rewards(1) = round(means(1) + std_devs(1) * randn());
+        elseif arm == 2
+            % Arm 2, correlated with Arm 1
+            R1 = rewards(1);
+            mu_R2_given_R1 = means(2) + correlation_matrix(2, 1) * (R1 - means(1));
+            sigma_R2_given_R1 = std_devs(2) * sqrt(1 - correlation_matrix(2, 1)^2);
+            rewards(2) = round(mu_R2_given_R1 + sigma_R2_given_R1 * randn());
+        else
+            % Arms 3 and 4, independent
+            rewards(arm) = round(means(arm) + std_devs(arm) * randn());
+        end
+        % Clamp the rewards to be within the range [1, 100]
+        rewards(arm) = max(1, min(100, rewards(arm)));
+    end
+
+    Button_CScores = rewards;
+end

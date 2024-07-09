@@ -15,7 +15,7 @@
 function [player_data, cpu_data, Totals] = RunTrial(Parameters, Disbtn, Button_Scores, Cpu, Totals)
     %% PRE STAGE - Before the timer of the activity starts
     % Initialize some of the variables we need for storing
-    [pl_score, cpu_score] = deal(0);
+    [pl_ score, cpu_score] = deal(0);
     [pl_choice, cpu_choice] = deal('Void');
     pl_time = -1;
 
