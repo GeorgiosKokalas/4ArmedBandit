@@ -5,57 +5,67 @@
 %   - Text_Pars  (parameters for the text)
 % Return Values: None
 
-function player_avatar = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
+function [player_avatar, events] = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
     % Load the colors
     load('colors.mat','color_list');
+    events = {};
     
     %% FIRST MESSAGE
     % Set the appropriate text size for the intro
     Screen('TextSize', Screen_Pars.window, Text_Pars.size.intro);
 
     % % Create the Introductory Message for the Experiment 
-    greeting_message = ['Hello, welcome to the multi armed bandit task\n',...
-                        'Your goal is to get as many points as you can by learning which buttons reward the most.\n',...
-                        'You will be presented with four choices that are mapped to the four buttons of your controller.\n', ...
-                        'One of these choices will be unavailable, and will be grayed out.\n',...
-                        'NOTE: Points yielded by every button CAN change over time.\n\n\n',...
-                        'You will be playing against a player at a time.\n', ...
-                        'You can observe their choices and scores to maximize the outcome of yours.\n\n\n', ...
+    greeting_message = ['Hello, welcome to the multi armed bandit task.\n',...
+                        'Your goal is to select the buttons that yield the maximum points.\n',...
+                        'The 4 buttons are mapped to the four buttons of your controller.\n', ...
+                        'One of these choices will be grayed out and unavailable.\n',...
+                        'NOTE: Points yielded by any button CAN change over time.\n\n\n',...
+                        'You will be playing against 1 player at a time.\n', ...
+                        'You can maximize your own score by observing their playstyle.\n\n\n', ...
                         'Press any buttons to proceed.'];
                         
     DrawFormattedText(Screen_Pars.window, greeting_message, 'center', Screen_Pars.center(2)-200, color_list.white);
-
-    % Update the Screen
+    events = {"Intro_Part1", DrawPhotoDiode(Screen_Pars)};
     Screen('Flip',Screen_Pars.window);
+    WaitSecs(0.3)
+
+    DrawFormattedText(Screen_Pars.window, greeting_message, 'center', Screen_Pars.center(2)-200, color_list.white);
+    Screen('Flip',Screen_Pars.window);
+
     while ~KbCheck() && ~GetXBox().AnyButton; end
     WaitSecs(0.5);
     
 
     %% CHARACTER SELECTION
-     break_loop = false;
-     controls_message = ['Please select your avatar.\n',... 
-                         'Use the left joystick or Dpad to navigate\n',...
-                         'Press A to make your selection'];
+    contd_in = false;   % Continued input check
+    controls_message = ['Please select your avatar.\n',...
+                        'Use the Dpad or any of the Joysticks to navigate\n',...
+                        'Press A, B, X or Y to make your selection'];
 
-     % Create a matrix for all 6 image rects
-     rect_base = [1, 1, 3, 3];
-     img_rects = rect_base;
-     % Create the first row
-     for i = 1:2 
-         img_rects = [img_rects; img_rects(end, :) + [2, 0, 2, 0]]; 
-     end
-     img_rects = [img_rects; img_rects+ [0,2,0,2]]; % Create the second row
-     
-     % Adjust the rects for the screen size
-     img_rects = img_rects .* [Screen_Pars.window_width/8, Screen_Pars.window_height/6,...
-                               Screen_Pars.window_width/8, Screen_Pars.window_height/6];
-     
-     % Create a map of all the images
-     img_map = [1,2,3;4,5,6];
-     sel_img = 1;
+    % Create a matrix for all 6 image rects
+    rect_base = [1, 1, 3, 3];
+    img_rects = rect_base;
+    % Create the first row
+    for i = 1:2
+        img_rects = [img_rects; img_rects(end, :) + [2, 0, 2, 0]];
+    end
+    img_rects = [img_rects; img_rects+ [0,2,0,2]]; % Create the second row
 
-     while true
-        % Draw each image. Create a green border for the selected one    
+    % Adjust the rects for the screen size
+    img_rects = img_rects .* [Screen_Pars.window_width/8, Screen_Pars.window_height/6,...
+        Screen_Pars.window_width/8, Screen_Pars.window_height/6];
+
+    % Create a map of all the images
+    img_map = [1,2,3;4,5,6];
+    sel_img = 1;
+    
+    char_sel_start = GetSecs();
+    events = [events; {"Character Selection Start", char_sel_start}];
+    while true
+        % If it is early enough draw the photodiode
+        if GetSecs() - char_sel_start < 0.3; DrawPhotoDiode(Screen_Pars); end
+
+        % Draw each image. Create a green border for the selected one
         for img_idx = 1:6
             DrawIcon(Screen_Pars.window, ['PlAv', num2str(img_idx), '.png'], img_rects(img_idx, :));
             if sel_img == img_idx
@@ -65,32 +75,53 @@ function player_avatar = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
         DrawFormattedText(Screen_Pars.window, controls_message, 'center', Text_Pars.size.intro, color_list.white);
         Screen('Flip', Screen_Pars.window);
 
-        % Wait for the XBox Controller signal   
-        pl_i = GetXBox()
-        
+        % Wait for the XBox Controller signal
+        pl_i = GetXBox();
+
+        % Prevent player from continuously giving input
+        contd_in_cond = ~pl_i.AnyButton && abs(pl_i.JoystickRX) < 0.5 && abs(pl_i.JoystickRY) < 0.5 &&...
+            abs(pl_i.JoystickLX) < 0.5 && abs(pl_i.JoystickLY) < 0.5;
+        if contd_in_cond; contd_in = false; end
+        if contd_in; continue; end
+
         % Navigate the Images using the DPad
         try
             [new_img_y, new_img_x] = find(img_map == sel_img);
-            if pl_i.DPadDown || (pl_i.JoystickLY < 0 && pl_i.JoystickLY < pl_i.JoystickLX)
-                new_img_y = new_img_y + 1;
-            elseif pl_i.DPadUp || (pl_i.JoystickLY > 0 && pl_i.JoystickLY > pl_i.JoystickLX)
-                new_img_y = new_img_y - 1;
-            elseif pl_i.DPadRight || (pl_i.JoystickLX > 0 && pl_i.JoystickLX > pl_i.JoystickLY)  
-                new_img_x = new_img_x + 1;
-            elseif pl_i.DPadLeft || (pl_i.JoystickLX < 0 && pl_i.JoystickLX < pl_i.JoystickLY)
-                new_img_x = new_img_x - 1;
+
+            % Observe player movement from joysticks and DPad
+            down_cond = pl_i.DPadDown || (pl_i.JoystickRY > 0.5 && abs(pl_i.JoystickRX) < 0.5) ||...
+                (pl_i.JoystickLY > 0.5 && abs(pl_i.JoystickLX) < 0.5);
+            up_cond = pl_i.DPadUp || (pl_i.JoystickRY < -0.5 && abs(pl_i.JoystickRX) < 0.5) ||...
+                (pl_i.JoystickLY < -0.5 && abs(pl_i.JoystickLX) < 0.5);
+            right_cond = pl_i.DPadRight || (pl_i.JoystickRX > 0.5 && abs(pl_i.JoystickRY) < 0.5) ||...
+                (pl_i.JoystickLX > 0.5 && abs(pl_i.JoystickLY) < 0.5);
+            left_cond = pl_i.DPadLeft || (pl_i.JoystickRX < -0.5 && abs(pl_i.JoystickRY) < 0.5) ||...
+                (pl_i.JoystickLX < -0.5 && abs(pl_i.JoystickLY) < 0.5);
+
+            % Move the player based on their input
+            if down_cond;      new_img_y = new_img_y + 1;
+            elseif up_cond;    new_img_y = new_img_y - 1;
+            elseif right_cond; new_img_x = new_img_x + 1;
+            elseif left_cond;  new_img_x = new_img_x - 1;
             end
-            disp([new_img_x, new_img_y]);
-            sel_img = img_map(new_img_y, new_img_x);
-            disp(sel_img);
-        catch ME
-            disp(ME)
-            disp('error');
+
+            % Store the fact that we already moved
+            if up_cond || down_cond || left_cond || right_cond
+                contd_in = true;
+            end
+
+            % DEBUG
+            % disp([new_img_x, new_img_y]);
+            % sel_img = img_map(new_img_y, new_img_x);
+            % disp(sel_img);
+        catch
+            %     disp(ME)
+            %     disp('error');
         end
-        
-        if pl_i.A; break; end
-        WaitSecs(0.2);
-     end
+
+        % Check for selection buttons
+        if pl_i.A || pl_i.B || pl_i.X || pl_i.y; break; end
+    end
     player_avatar = sel_img;
 
     %% BUTTON SCHEME FAMILIARIZATION
@@ -99,8 +130,13 @@ function player_avatar = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
     break_loop = false;
     controls_message = ['Familiarize yourself with the controls. \n',...
                         'When ready press any other button'];                  
+    in_fam_start = GetSecs();
+    events = [events; {"Character Selection Start", char_sel_start}];
 
     while ~break_loop
+        % If it is early enough draw the photodiode
+        if GetSecs() - in_fam_start < 0.3; DrawPhotoDiode(Screen_Pars); end
+
         pl_i = GetXBox();
         for button_idx = 1:length(Targ_Pars.button_names)
             color = Targ_Pars.colors(button_idx,:);
