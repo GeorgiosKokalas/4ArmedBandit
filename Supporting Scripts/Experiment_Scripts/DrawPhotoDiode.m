@@ -5,7 +5,7 @@
 function time = DrawPhotoDiode(Screen_Pars)
     photodiode_rect = [0, Screen_Pars.window_height*(8/9), ...
                         Screen_Pars.window_width/8, Screen_Pars.window_height];
-    Screen('FillRect', Screen_Pars.window, photodiode_rect, repmat(255, 1, 4));
+    Screen('FillRect', Screen_Pars.window, repmat(255, 1, 4), photodiode_rect);
     time = GetSecs();
 end
 
