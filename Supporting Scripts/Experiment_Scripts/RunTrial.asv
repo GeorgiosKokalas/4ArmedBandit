@@ -169,9 +169,9 @@ function [cpu_data, Totals, events] = cpu_turn(Screen_Pars, Targ_Pars, Trial_Par
     drawAvatars(Screen_Pars, Avatars, Text_Size, Cpu.Behavior_Mode, Totals, true);
     cpuDrawPart1(Screen_Pars, Targ_Pars, Disbtn, false);
     
-    %cpu_choice = Cpu.getResponse(Button_Scores);
+    cpu_choice = Cpu.getResponse(Button_Scores);
     score_idx = Targ_Pars.button_names == cpu_choice;
-    %cpu_score = Button_Scores(score_idx);
+    cpu_score = Button_Scores(score_idx);
     Totals.cpu = Totals.cpu + cpu_score;
     Cpu.changeBehavior(cpu_score,Button_Scores);
     
