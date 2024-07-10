@@ -41,7 +41,7 @@ classdef CpuPlayerT3 < handle
             obj.Next_Choice = next_choice;
             obj.Choice_Origins = next_choice;
             obj.Prev_Choice = next_choice;
-            obj.updateScores(true); % Initialize scores
+            obj.updateScores(false); % Initialize scores
         end
         
         % General method to change behavior
@@ -75,7 +75,7 @@ classdef CpuPlayerT3 < handle
             obj.Next_Choice = obj.Choice_Origins;
             obj.Rewards = zeros(1, length(obj.Choice_List));
             obj.Counts = zeros(1, length(obj.Choice_List));
-            obj.updateScores(true); % Reinitialize scores on reset
+            obj.updateScores(false); % Reinitialize scores on reset
         end
 
     end
