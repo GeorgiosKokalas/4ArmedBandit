@@ -114,39 +114,47 @@ classdef CpuPlayerT3 < handle
         function randomChoiceBehavior(obj)
             obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List)));
         end
+
         % The Cheater Behavior
-        function cheaterChoiceBehavior(obj)
-            if rand()< .6
-                [~, best_score] = max(obj.Scores)
-                obj.Next_Choice = obj.Choice_List(best_score)
+        function cheaterBehavior(obj)
+            if rand() < 0.60
+                [~, best_index] = max(obj.Scores);
+                obj.Next_Choice = obj.Choice_List(best_index);
             else
                 obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List)));
             end
         end
 
-    end
-end
-
-% Function to get scores
-function Button_Scores = GetScores(N_Arms, Change_Rng, Initialize)
-    persistent means std_devs
-
-    if ~exist("Initialize", "var"); Initialize = false; end
-
-    if Initialize || isempty(means) || isempty(std_devs)
-        % Initialize means and standard deviations for the arms
-        means = floor(5 + (95-5) * rand(1, N_Arms));   % Random means between 5 and 95
-        std_devs = randi([1, 3], 1, N_Arms);    % Random std devs chosen from 1, 2, or 3
-    else
-        % Update the means of the arms based on the given probability
-        for arm = 1:N_Arms
-            % 1 in 20 chance to change the mean of the arm
-            if rand() < Change_Rng/100
-                means[arm] = floor(5 + (95-5) * rand());
+        % Tricky Behavior
+        function trickyBehavior(obj)
+            [sorted_scores, sorted_indices] = sort(obj.Scores, 'descend');
+            best_score = sorted_scores(1); % best scores
+            second_best_score = sorted_scores(2); %basically nescores 
+            
+            if rand()< (1- (best_score-second_best_score)/25)
+                obj.Next_Choice = obj.Choice_List(sorted_indices(2));
+            else
+                obj.Next_Choice = obj.Choice_List(sorted_indices(1));
             end
         end
-        
+
+        function scammyBehavior(obj)
+            [sorted_scores, sorted_indices] = sort(obj.Scores, 'descend');
+            best_score = sorted_scores(1);
+            second_best_score = sorted_scores(2);
+
+            if best_score - second_best_score < 10
+                obj.Next_Choice = obj.Choice_List(sorted_indices(2));
+            else
+                obj.Next_Choice = obj.Choice_List(sorted_indices(1));
+            end
+        end
+
+
+
+
+
     end
-    % Calculate points as the combination of the mean plus standard deviation
-    Button_Scores = means + std_devs;
 end
+
+
