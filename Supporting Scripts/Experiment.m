@@ -47,8 +47,7 @@ function Experiment(Parameters)
     %% Carry out the task
     % Carry out the Introduction to the task
     if Parameters.trial.show_intro
-        [Parameters.avatars.player, intro_events] = Introduction(Parameters.screen, Parameters.text, Parameters.target);
-        exp_events = [exp_events; intro_events];
+        [Parameters.avatars.player] = Introduction(Parameters.screen, Parameters.text, Parameters.target);
     end
 
     % Carry out each block
@@ -66,7 +65,9 @@ function Experiment(Parameters)
 
         for trial_idx = 1:Parameters.trial.num
             %cpu_list(cpu_idx).changeBehavior(button_scores, cpu_data.choice);
-            [pl_data, cpu_data, block_total, trial_events] = RunTrial(Parameters, disbtn, button_scores, cpu_list(cpu_idx), block_total);
+            [pl_data, cpu_data, block_total, trial_events] = RunTrial(Parameters, disbtn, button_scores, ...
+                                                                      cpu_list(cpu_idx), block_total, ...
+                                                                      block_idx, trial_idx);
             block_events = [block_events; trial_events];
             button_scores = GetScores(length(Parameters.target.button_names), Parameters.target.score_change_rng);
 

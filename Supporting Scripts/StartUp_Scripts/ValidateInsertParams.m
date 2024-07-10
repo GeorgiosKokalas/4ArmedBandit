@@ -95,6 +95,12 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
         in_pars.trial.num = 0;
     end
 
+    %Evaluating photodiode_dur_s
+    if ~isnum(in_pars.trial.photodiode_dur_s) && in_pars.trial.photodiode_dur_s < 0
+        disp("Inoperable value provided for in_pars.trial.photodiode_dur_s. Applying default...");
+        in_pars.trial.photodiode_dur_s = 0.5;
+    end
+
     % Extra variables for in_pars.trial.cpu_wait_s
     in_pars.trial.cpu_wait_dur = in_pars.trial.cpu_wait_s(2) - in_pars.trial.cpu_wait_s(1);
 

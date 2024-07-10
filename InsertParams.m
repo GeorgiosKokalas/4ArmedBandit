@@ -39,6 +39,7 @@ function in_pars = InsertParams(Patient_Name)
     in_pars.trial.duration_s = 20;                  % Positive integer - Determines how long someone has to provide an answer
     in_pars.trial.cpu_wait_s = [2, 4];              % Vector of 2 whole numbers - Determines how long the player waits for the opponent input
     in_pars.trial.num = 1;
+    in_pars.trial.photodiode_dur_s = 0.5;
 
     in_pars.target.radius_percent = 90;                % Positive integer - Give 0 for max radius
     in_pars.target.colors = [color_list.yellow * 0.8;...

@@ -5,10 +5,9 @@
 %   - Text_Pars  (parameters for the text)
 % Return Values: None
 
-function [player_avatar, events] = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
+function [player_avatar] = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
     % Load the colors
     load('colors.mat','color_list');
-    events = {};
     
     %% FIRST MESSAGE
     % Set the appropriate text size for the intro
@@ -25,7 +24,6 @@ function [player_avatar, events] = Introduction(Screen_Pars, Text_Pars, Targ_Par
                         'Press any buttons to proceed.'];
                         
     DrawFormattedText(Screen_Pars.window, greeting_message, 'center', Screen_Pars.center(2)-200, color_list.white);
-    events = {"Intro_Part1", DrawPhotoDiode(Screen_Pars)};
     Screen('Flip',Screen_Pars.window);
     WaitSecs(0.3)
 
@@ -59,12 +57,7 @@ function [player_avatar, events] = Introduction(Screen_Pars, Text_Pars, Targ_Par
     img_map = [1,2,3;4,5,6];
     sel_img = 1;
     
-    char_sel_start = GetSecs();
-    events = [events; {"Character Selection Start", char_sel_start}];
     while true
-        % If it is early enough draw the photodiode
-        % if GetSecs() - char_sel_start < 0.3; DrawPhotoDiode(Screen_Pars); end
-
         % Draw each image. Create a green border for the selected one
         for img_idx = 1:6
             DrawIcon(Screen_Pars.window, ['PlAv', num2str(img_idx), '.png'], img_rects(img_idx, :));
@@ -115,8 +108,6 @@ function [player_avatar, events] = Introduction(Screen_Pars, Text_Pars, Targ_Par
             % disp([new_img_x, new_img_y]);
             % disp(sel_img);
         catch
-                disp(ME)
-                disp('error');
         end
 
         % Check for selection buttons
@@ -132,11 +123,9 @@ function [player_avatar, events] = Introduction(Screen_Pars, Text_Pars, Targ_Par
                         'When ready press any other button'];                  
     
     in_fam_start = GetSecs();
-    events = [events; {"Input Familiarization Start", in_fam_start}];
 
     while ~break_loop
         % If it is early enough draw the photodiode
-        if GetSecs() - in_fam_start < 0.3; DrawPhotoDiode(Screen_Pars); end
 
         pl_i = GetXBox();
         for button_idx = 1:length(Targ_Pars.button_names)
