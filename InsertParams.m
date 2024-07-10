@@ -49,7 +49,7 @@ function in_pars = InsertParams(Patient_Name)
     in_pars.target.score_change_rng = 40;     % Vector of 4 Positive integers 1-10
     
     in_pars.disbtn.player = 'A';
-    in_pars.disbtn.cpu = 'Y';
+    in_pars.disbtn.cpu = '';
 
     in_pars = ValidateInsertParams(in_pars, Patient_Name);
 end

@@ -119,6 +119,8 @@ function [pl_data, Totals, events] = player_turn(Screen_Pars, Targ_Pars, Disbtn,
     
     % SHOW THE SCORES THE PLAYER HAS GOTTEN
     % Draw the Avatar 
+    drawAvatars(Screen_Pars, Avatars, Text_Size, Cpu_Num, Totals, false);
+    
     for button_idx = 1:length(Targ_Pars.button_names)
         % Get the color and highlight it if selected
         color = Targ_Pars.colors(button_idx,:);
@@ -143,7 +145,6 @@ function [pl_data, Totals, events] = player_turn(Screen_Pars, Targ_Pars, Disbtn,
             Screen('FillOval',Screen_Pars.window, [50, 50, 50, 210], Targ_Pars.rects(button_idx,:));
         end
     end
-
     Screen('Flip', Screen_Pars.window);
     
     % Get the data for the player to be returned

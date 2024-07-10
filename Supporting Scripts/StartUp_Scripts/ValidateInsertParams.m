@@ -158,8 +158,9 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     change_pb = false;
     if ~ischar(in_pars.disbtn.player)
         if ~isstring(in_pars.disbtn.player); change_pb = true;
-        else; in_pars.disbtn.player = char(in_pars.disbtn.player);
+        else; in_pars.disbtn.player = char(upper(in_pars.disbtn.player));
         end
+    else; in_pars.disbtn.player = upper(in_pars.disbtn.player);
     end
     for idx = 1:dpl
         if ~contains(lower(button_names), lower(in_pars.disbtn.player(idx)))
@@ -167,9 +168,13 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
             break;
         end
     end
-    if change_pb || ~isvector(in_pars.disbtn.player)
+
+    if change_pb
         disp("Inoperable value provided for in_pars.disbtn.player. Applying default...");
         in_pars.disbtn.player = 'A';
+    elseif ~isvector(in_pars.disbtn.player)
+        disp("WARNING: empty string provided for in_pars.disbtn.player. Assuming this is done on purpose.")
+        in_pars.disbtn.player = '0';
     end
 
     % Evaluating disbtn.cpu
@@ -177,8 +182,9 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     change_cb = false;
     if ~ischar(in_pars.disbtn.cpu)
         if ~isstring(in_pars.disbtn.cpu); change_cb = true;
-        else; in_pars.disbtn.cpu = char(in_pars.disbtn.cpu);
+        else; in_pars.disbtn.cpu = char(upper(in_pars.disbtn.cpu));
         end
+    else; in_pars.disbtn.cpu = upper(in_pars.disbtn.cpu);
     end
     for idx = 1:dcl
         if ~contains(lower(button_names), lower(in_pars.disbtn.cpu(idx)))
@@ -186,10 +192,14 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
             break;
         end
     end
-    if change_cb || ~isvector(in_pars.disbtn.cpu) || dcl ~= dpl
+    if change_cb
         disp("Inoperable value provided for in_pars.disbtn.cpu. Applying default...");
-        in_pars.disbtn.cpu = repmat('Y', 1, dpl);
+        in_pars.disbtn.cpu = 'Y';
+    elseif ~isvector(in_pars.disbtn.cpu)
+        disp("WARNING: empty string provided for in_pars.disbtn.cpu. Assuming this is done on purpose.")
+        in_pars.disbtn.cpu = '0';
     end
+
 
     % CREATING OUTPUT DIRECTORY 
     in_pars.output_dir = fullfile(pwd(),'Output', [Patient_Name, '_' ,datestr(datetime('now'), 'yyyymmdd-HHMM')]);
@@ -242,7 +252,7 @@ function result = isnumlist(input, Option)
                 result = false;
             end
         end
-    catch ME
+    catch
         result = false;
     end
 end
