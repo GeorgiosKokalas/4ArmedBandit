@@ -6,12 +6,12 @@ function main(Patient_Name)
     % Add all the directories in the path just in case
     cur_script = mfilename('fullpath');
     cur_dir = cur_script(1:end-length(mfilename));
-    cd(cur_dir(1).folder);
-    addpath(genpath(cur_dir(1).folder));
+    cd(cur_dir);
+    addpath(genpath(cur_dir));
    
     parameters = StartUp(Patient_Name);
     
-    scores = Experiment(parameters);
+    Experiment(parameters);
     
     KbStrokeWait();
     sca;  
@@ -19,5 +19,5 @@ function main(Patient_Name)
     ShutDown(parameters);
 
     % Remove all the directories from the path
-    rmpath(genpath(cur_dir(1).folder));
+    % rmpath(genpath(cur_dir));
 end 
