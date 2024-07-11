@@ -1,9 +1,3 @@
-% A class that defines a CPU player.
-% It can currently:
-%   - Adapt its behavior (changeBehavior)
-%   - Respond to a choice (getResponse)
-%   - Reset (reset)
-
 classdef CpuPlayerT3 < handle
     properties
         Behavior_Mode   % Mode of Behavior, each mode interprets and reacts to the player's actions differently 
@@ -14,26 +8,30 @@ classdef CpuPlayerT3 < handle
         Epsilon         % Sets the epsilon value for e-greedy algo
         Rewards         % Rewards received
         Counts          % Counts per choice
-        Behaviors       % A struct of behavior functions
         Scores          % Scores from GetScores function
     end
 
     methods
         % Constructor, this sets up default mode
         function obj = CpuPlayerT3(behavior_mode, choice_list, next_choice, epsilon)
-            if ~exist("behavior_mode", "var") || isempty(behavior_mode)
+           
+            if nargin < 1 || isempty(behavior_mode)
                 behavior_mode = 1; 
             end
-            if ~exist("choice_list", "var") || isempty(choice_list)
+            if nargin < 2 || isempty(choice_list)
                 choice_list = ['A', 'B', 'X', 'Y']; 
             end
-            if ~exist("next_choice", "var") || isempty(next_choice)
-                next_choice = choice_list(randi(length(choice_list))); 
+            if nargin < 3 || isempty(next_choice)
+                next_choice = choice_list(randi(length(choice_list)));
+                % if behavior_mode == 1 || behavior_mode == 2
+                %     next_choice = choice_list(randi(length(choice_list))); % Random choice for modes 1 and 2
+                % else
+                %     next_choice = obj.determineChoiceBasedOnScores(choice_list); % Determine choice based on scores for modes 3, 4, 5
+                % end
             end
-            if ~exist("epsilon", "var") || isempty(epsilon)
+            if nargin < 4 || isempty(epsilon)
                 epsilon = 0.4; 
             end
-            
             obj.Behavior_Mode = behavior_mode;
             obj.Choice_List = choice_list;
             obj.Epsilon = epsilon;
@@ -42,14 +40,13 @@ classdef CpuPlayerT3 < handle
             obj.Next_Choice = next_choice;
             obj.Choice_Origins = next_choice;
             obj.Prev_Choice = next_choice;
-            obj.updateScores(true); % Initialize scores
+            obj.Scores = zeros(1, length(choice_list)); % Initialize scores         
         end
         
         % General method to change behavior
-        function changeBehavior(obj, points)
+        function changeBehavior(obj, points, button_scores)
             obj.updateRewards(points); % Update the memory of the choices that we made
-            obj.updateScores(false); % Update scores on behavior change
-
+            obj.Scores = button_scores; % Update scores based on passed button scores
             switch obj.Behavior_Mode  % Different functions based on behaviors
                 case 1
                     obj.epsilonGreedyBehavior();
@@ -59,13 +56,28 @@ classdef CpuPlayerT3 < handle
                     obj.cheaterBehavior();
                 case 4
                     obj.trickyBehavior();
+                case 5
+                    obj.scammyBehavior();
                 otherwise
                     error('Unknown behavior mode');
             end
         end        
         
         % Method that gives the CPU's response
-        function choice = getResponse(obj)
+        function choice = getResponse(obj,Button_Scores)
+            switch obj.Behavior_Mode
+                case {3, 4, 5}
+                    switch obj.Behavior_Mode
+                        case 3
+                            obj.cheaterBehavior();
+                        case 4
+                            obj.trickyBehavior();
+                        case 5
+                            obj.scammyBehavior();
+                    end
+                otherwise
+                    obj.updateScores(true); % Update scores on response
+            end
             choice = obj.Next_Choice;
             obj.Prev_Choice = choice;
         end
@@ -75,7 +87,7 @@ classdef CpuPlayerT3 < handle
             obj.Next_Choice = obj.Choice_Origins;
             obj.Rewards = zeros(1, length(obj.Choice_List));
             obj.Counts = zeros(1, length(obj.Choice_List));
-            obj.updateScores(true); % Reinitialize scores on reset
+            obj.Scores = zeros(1, length(obj.Choice_List)); % Reinitialize scores on reset
         end
 
     end
@@ -87,7 +99,7 @@ classdef CpuPlayerT3 < handle
             if nargin < 2
                 initialize = false;
             end
-            obj.Scores = GetScores(length(obj.Choice_List), 1, initialize);
+            obj.Scores = GetScores(length(obj.Choice_List), .05, initialize);
         end
 
         % Method that updates choices and rewards
@@ -96,6 +108,29 @@ classdef CpuPlayerT3 < handle
             if ~isempty(choice_index)
                 obj.Rewards(choice_index) = obj.Rewards(choice_index) + reward;
                 obj.Counts(choice_index) = obj.Counts(choice_index) + 1;
+            end
+        end
+
+        % Determine choice based on scores for behaviors 3, 4, 5
+        function choice = determineChoiceBasedOnScores(obj, choice_list)          
+            switch obj.Behavior_Mode
+                case 3 % cheaterBehavior
+                    [~, best_index] = max(obj.Scores);
+                    choice = choice_list(best_index);
+                case 4 % trickyBehavior
+                    [sorted_scores, sorted_indices] = sort(obj.Scores, 'descend');
+                    best_score = sorted_scores(1); % best scores
+                    second_best_score = sorted_scores(2); % second best score
+                    if rand() < (1 - (best_score - second_best_score) / 25)
+                        choice = choice_list(sorted_indices(2));
+                    else
+                        choice = choice_list(sorted_indices(1));
+                    end
+                case 5 % scammyBehavior
+                    [~, worst_index] = min(obj.Scores);
+                    choice = choice_list(worst_index);
+                otherwise
+                    error('Invalid behavior mode');
             end
         end
 
@@ -129,32 +164,22 @@ classdef CpuPlayerT3 < handle
         function trickyBehavior(obj)
             [sorted_scores, sorted_indices] = sort(obj.Scores, 'descend');
             best_score = sorted_scores(1); % best scores
-            second_best_score = sorted_scores(2); %basically nescores 
-            
-            if rand()< (1- (best_score-second_best_score)/25)
+            second_best_score = sorted_scores(2); %basically nescores          
+            if rand() < (1 - (best_score - second_best_score) / 25)
                 obj.Next_Choice = obj.Choice_List(sorted_indices(2));
             else
                 obj.Next_Choice = obj.Choice_List(sorted_indices(1));
             end
         end
 
+        % Scammy Behavior
         function scammyBehavior(obj)
-            [sorted_scores, sorted_indices] = sort(obj.Scores, 'descend');
-            best_score = sorted_scores(1);
-            second_best_score = sorted_scores(2);
-
-            if best_score - second_best_score < 10
-                obj.Next_Choice = obj.Choice_List(sorted_indices(2));
+            [~, sorted_indices] = sort(obj.Scores, 'ascend'); % Sort in ascending order to get the worst arms first
+            if rand() < 0.60
+                obj.Next_Choice = obj.Choice_List(sorted_indices(1)); % Choose the worst arm (index 1 after sorting in ascending order)
             else
-                obj.Next_Choice = obj.Choice_List(sorted_indices(1));
+                obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List))); % Random choice
             end
         end
-
-
-
-
-
     end
 end
-
-

@@ -14,16 +14,22 @@ classdef CpuPlayerT3 < handle
     methods
         % Constructor, this sets up default mode
         function obj = CpuPlayerT3(behavior_mode, choice_list, next_choice, epsilon)
-            if ~exist("behavior_mode", "var") || isempty(behavior_mode)
+           
+            if nargin < 1 || isempty(behavior_mode)
                 behavior_mode = 1; 
             end
-            if ~exist("choice_list", "var") || isempty(choice_list)
-                choice_list = ['A', 'B', 'X', 'Y']; 
+            if nargin < 2 || isempty(choice_list)
+                choice_list = ['Y', 'B', 'A', 'X']; 
             end
-            if ~exist("next_choice", "var") || isempty(next_choice)
-                next_choice = choice_list(randi(length(choice_list))); 
+            if nargin < 3 || isempty(next_choice)
+                next_choice = choice_list(randi(length(choice_list)));
+                % if behavior_mode == 1 || behavior_mode == 2
+                %     next_choice = choice_list(randi(length(choice_list))); % Random choice for modes 1 and 2
+                % else
+                %     next_choice = obj.determineChoiceBasedOnScores(choice_list); % Determine choice based on scores for modes 3, 4, 5
+                % end
             end
-            if ~exist("epsilon", "var") || isempty(epsilon)
+            if nargin < 4 || isempty(epsilon)
                 epsilon = 0.4; 
             end
             obj.Behavior_Mode = behavior_mode;
@@ -34,43 +40,36 @@ classdef CpuPlayerT3 < handle
             obj.Next_Choice = next_choice;
             obj.Choice_Origins = next_choice;
             obj.Prev_Choice = next_choice;
-            obj.Scores = zeros(1, length(choice_list)); % Initialize scores
+            %obj.Scores = zeros(1, length(choice_list)); % Initialize scores         
         end
         
         % General method to change behavior
-        function changeBehavior(obj, points, button_scores)
+        function changeBehavior(obj, points) %, button_scores)
             obj.updateRewards(points); % Update the memory of the choices that we made
-            obj.Scores = button_scores; % Update scores based on passed button scores
+            %obj.Scores = button_scores; % Update scores based on passed button scores
             switch obj.Behavior_Mode  % Different functions based on behaviors
                 case 1
                     obj.epsilonGreedyBehavior();
                 case 2
                     obj.randomChoiceBehavior();
-                case 3
-                    obj.cheaterBehavior();
-                case 4
-                    obj.trickyBehavior();
-                case 5
-                    obj.scammyBehavior();
-                otherwise
-                    error('Unknown behavior mode');
+                % case 3
+                %     obj.cheaterBehavior();
+                % case 4
+                %     obj.trickyBehavior();
+                % case 5
+                %     obj.scammyBehavior();
             end
         end        
         
         % Method that gives the CPU's response
-        function choice = getResponse(obj, button_scores)
-            if ismember(obj.Behavior_Mode, [3, 4, 5])
-                obj.Scores = button_scores; % Update scores based on passed button scores
-                switch obj.Behavior_Mode
-                    case 3
-                        obj.cheaterBehavior();
-                    case 4
-                        obj.trickyBehavior();
-                    case 5
-                        obj.scammyBehavior();
-                end
-            else
-                obj.updateScores(true); % Update scores on response
+        function choice = getResponse(obj,button_scores)
+            switch obj.Behavior_Mode
+                case 3
+                    obj.cheaterBehavior(button_scores);
+                case 4
+                    obj.trickyBehavior(button_scores);
+                case 5
+                    obj.scammyBehavior(button_scores);
             end
             choice = obj.Next_Choice;
             obj.Prev_Choice = choice;
@@ -89,12 +88,12 @@ classdef CpuPlayerT3 < handle
     % Methods used by the class internally
     methods (Access = private)
         % Method to update scores
-        function updateScores(obj, initialize)
-            if nargin < 2
-                initialize = false;
-            end
-            obj.Scores = GetScores(length(obj.Choice_List), .05, initialize);
-        end
+        % function updateScores(obj, initialize)
+        %     if nargin < 2
+        %         initialize = false;
+        %     end
+        %     obj.Scores = GetScores(length(obj.Choice_List), .05, initialize);
+        % end
 
         % Method that updates choices and rewards
         function updateRewards(obj, reward)
@@ -102,6 +101,29 @@ classdef CpuPlayerT3 < handle
             if ~isempty(choice_index)
                 obj.Rewards(choice_index) = obj.Rewards(choice_index) + reward;
                 obj.Counts(choice_index) = obj.Counts(choice_index) + 1;
+            end
+        end
+
+        % Determine choice based on scores for behaviors 3, 4, 5
+        function choice = determineChoiceBasedOnScores(obj, choice_list)          
+            switch obj.Behavior_Mode
+                case 3 % cheaterBehavior
+                    [~, best_index] = max(obj.Scores);
+                    choice = choice_list(best_index);
+                case 4 % trickyBehavior
+                    [sorted_scores, sorted_indices] = sort(obj.Scores, 'descend');
+                    best_score = sorted_scores(1); % best scores
+                    second_best_score = sorted_scores(2); % second best score
+                    if rand() < (1 - (best_score - second_best_score) / 25)
+                        choice = choice_list(sorted_indices(2));
+                    else
+                        choice = choice_list(sorted_indices(1));
+                    end
+                case 5 % scammyBehavior
+                    [~, worst_index] = min(obj.Scores);
+                    choice = choice_list(worst_index);
+                otherwise
+                    error('Invalid behavior mode');
             end
         end
 
@@ -122,9 +144,9 @@ classdef CpuPlayerT3 < handle
         end
 
         % The Cheater Behavior
-        function cheaterBehavior(obj)
-            if rand() < 0.60
-                [~, best_index] = max(obj.Scores);
+        function cheaterBehavior(obj,button_scores)
+            if rand() < .80
+                [~, best_index] = max(button_scores);
                 obj.Next_Choice = obj.Choice_List(best_index);
             else
                 obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List)));
@@ -132,20 +154,26 @@ classdef CpuPlayerT3 < handle
         end
 
         % Tricky Behavior
-        function trickyBehavior(obj)
-            [sorted_scores, sorted_indices] = sort(obj.Scores, 'descend');
+        function trickyBehavior(obj,button_scores)
+            [sorted_scores, sorted_indices] = sort(button_scores, 'descend');
             best_score = sorted_scores(1); % best scores
-            second_best_score = sorted_scores(2); %basically nescores          
-            if rand() < (1 - (best_score - second_best_score) / 25)
-                obj.Next_Choice = obj.Choice_List(sorted_indices(2));
+            second_best_score = sorted_scores(2); %basically nescores   
+            if rand() < 0.8
+                if rand() < (1 - (best_score - second_best_score) / 25)
+                    obj.Next_Choice = obj.Choice_List(sorted_indices(2));
+                else
+                    obj.Next_Choice = obj.Choice_List(sorted_indices(1));
+                end
             else
-                obj.Next_Choice = obj.Choice_List(sorted_indices(1));
+                obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List))); % Random choice
             end
+
         end
 
-        function scammyBehavior(obj)
-            [~, sorted_indices] = sort(obj.Scores, 'ascend'); % Sort in ascending order to get the worst arms first
-            if rand() < 0.60
+        % Scammy Behavior
+        function scammyBehavior(obj,button_scores)
+            [~, sorted_indices] = sort(button_scores, 'ascend'); % Sort in ascending order to get the worst arms first
+            if rand() < 0.80
                 obj.Next_Choice = obj.Choice_List(sorted_indices(1)); % Choose the worst arm (index 1 after sorting in ascending order)
             else
                 obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List))); % Random choice
