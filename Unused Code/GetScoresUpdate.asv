@@ -52,6 +52,7 @@ function [Button_Scores, change_log] = GetScoresUpdate(N_Arms, Change_Rng, Initi
 
     % Set Button Scores
     Button_Scores = new_means;
+    Button_Scores([3, 4]) = Button_Scores([4, 3]);
 
     % Return the change log
     change_log = prs_change_log;
