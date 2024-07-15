@@ -3,6 +3,7 @@ function run_MAB_24_7(taskRunNum,BR_connect)
 
 %taskrunNum is number of times this participant has run the task.
 %BR_connect is whether to start a blackrock recording
+% Hello im testing
 
 if nargin==1
     BR_connect = 1;
