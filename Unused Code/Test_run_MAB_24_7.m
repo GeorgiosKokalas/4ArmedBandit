@@ -1,9 +1,8 @@
 function run_MAB_24_7(taskRunNum,BR_connect)
 %run_MAB_24_7(1,1)
 
-%taskrunNum is number of times this participant has run art nav.
+%taskrunNum is number of times this participant has run the task.
 %BR_connect is whether to start a blackrock recording
-
 
 if nargin==1
     BR_connect = 1;
@@ -15,13 +14,11 @@ cd(taskDir)
 
 computerMaxVolume()
 
-
 %start blackrock
 if BR_connect
     [emuRunNum,sub_label] = getNextLogEntry();
     savefname = sprintf('EMU-%04d_subj-%s_task-4MAB_run-%02d',emuRunNum,sub_label,taskRunNum);
-    TaskComment('start',savefname);
-    
+    TaskComment('start',savefname);   
 else
     sub_label = 'TEST';
 end
@@ -31,7 +28,7 @@ end
 %run task OR maybe you can directly call on the main function
 main(sub_label)
 %Move Files to PatientData Folder
-moveFilesToPatientData(sub_label,taskRunNum)
+%moveFilesToPatientData(sub_label,taskRunNum)
 
 if BR_connect
     TaskComment('stop',savefname); 
@@ -53,39 +50,3 @@ end
 % main
 % end
 
-% function moveFilesToPatientData(sub_label,taskRunNum)
-% desktopDir = 'C:\\Users\EMU - Behavior\Desktop\';
-% saveDir = fullfile(userpath,'PatientData',sub_label,'ArtNav',['session_',num2str(taskRunNum)]);
-% if ~exist(saveDir,'dir')
-%     mkdir(saveDir)
-% end
-% 
-% positionFilesDir = dir(pwd);
-% positionFilesIdx = contains({positionFilesDir.name},'Position');
-% positionFiles = {positionFilesDir(positionFilesIdx).name};
-% for i = 1:length(positionFiles)
-%     movefile(fullfile(pwd,positionFiles{i}), fullfile(saveDir,positionFiles{i}));
-% end
-% 
-% rotationFilesDir = dir(pwd);
-% rotationFilesIdx = contains({rotationFilesDir.name},'Rotation');
-% rotationFiles = {rotationFilesDir(rotationFilesIdx).name};
-% for i = 1:length(rotationFiles)
-%     movefile(fullfile(pwd,rotationFiles{i}), fullfile(saveDir,rotationFiles{i}));
-% end
-% 
-% keyPressFilesDir = dir(desktopDir);
-% keyPressFilesIdx = contains({keyPressFilesDir.name},'KeyPress');
-% keyPressFiles = {keyPressFilesDir(keyPressFilesIdx).name};
-% for i = 1:length(keyPressFiles)
-%     movefile(fullfile(desktopDir,keyPressFiles{i}), fullfile(saveDir,keyPressFiles{i}));
-% end
-% 
-% SoundsFilesDir = dir(desktopDir);
-% SoundsFilesIdx = contains({SoundsFilesDir.name},'soundlog');
-% SoundsFiles = {SoundsFilesDir(SoundsFilesIdx).name};
-% for i = 1:length(SoundsFiles)
-%     movefile(fullfile(desktopDir,SoundsFiles{i}), fullfile(saveDir,SoundsFiles{i}));
-% end
-% 
-% end
