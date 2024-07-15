@@ -7,12 +7,11 @@
 function Introduction(Pars)
     % Load the colors
     load('colors.mat','color_list');
-    event_holders = {};
 
     %% FIRST MESSAGE
     %% Create the Introductory Message for the Experiment     
     % Store the event
-    event_holders{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "intro1", GetSecs());
+    Pars.NewEvent(CreateEvent("intro1"));
     
     Screen('TextSize', Pars.screen.window, 150);
     DrawFormattedText(Pars.screen.window, 'Multi Armed Bandit task', 'center', Pars.screen.center(2)-100, color_list.white);
@@ -54,7 +53,7 @@ function Introduction(Pars)
     break_greater_loop = false;
     while ~break_greater_loop 
         % Store the character selection event
-        event_holders{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "intro2", GetSecs());
+        Pars.NewEvent(CreateEvent("intro2"))
     
         break_greater_loop = true;
         while true
@@ -116,7 +115,7 @@ function Introduction(Pars)
 
         %% BUTTON SCHEME FAMILIARIZATION
         % Store the character selection event
-        event_holders{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "intro3", GetSecs());
+        Pars.NewEvent(CreateEvent("intro3"))
 
         break_loop = false;
         controls_message = ['Familiarize yourself with the controls. \n',...
@@ -160,12 +159,6 @@ function Introduction(Pars)
             %              ;
         end
         WaitSecs(0.5);
-    end
-
-    % save all of the events
-    for ev_idx = 1:length(event_holders)
-        while ~strcmpi(event_holders{ev_idx}.State, 'finished'); disp(event_holders{ev_idx}.State); end
-        Pars.NewEvent(fetchOutputs(event_holders{ev_idx}));
     end
 end
 

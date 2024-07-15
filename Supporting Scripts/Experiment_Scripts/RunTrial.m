@@ -17,13 +17,12 @@
 function [player_data, cpu_data, Totals, trial_events, abort] = RunTrial(Parameters, Disbtn, Button_Scores, Cpu, Totals, Block_Idx, Trial_Idx)
     %% PRE STAGE - Before the timer of the activity starts
     % Create a trial Start event
-    trev_hold = parfeval(backgroundPool, @CreateEvent, 1, "trialStart", GetSecs(), Block_Idx, Trial_Idx);
+    trial_events = CreateEvent("trialStart", Block_Idx, Trial_Idx);
 
     % Initialize some of the variables we need for storing
     pd_s = Parameters.trial.photodiode_dur_s;
     abort = false;
     
-    trial_events = fetchOutputs(trev_hold);
 
 
     %% PRESENTATION STAGE - The trial begins    
@@ -74,8 +73,7 @@ function [player_data, cpu_data, Totals, trial_events, abort] = RunTrial(Paramet
         trial_events = [trial_events; cpu_events; pl_events];
     end
 
-    trev_hold = parfeval(backgroundPool, @CreateEvent, 1, "trialEnd", GetSecs(), Block_Idx, Trial_Idx);
-    trial_events = [trial_events; fetchOutputs(trev_hold)];
+    trial_events = [trial_events; CreateEvent("trialEnd", Block_Idx, Trial_Idx)];
 end
 
 
@@ -96,8 +94,7 @@ end
 %   - events        (A list of the events that happened during the player's turn)   
 function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Totals, Cpu, Block_Idx, Trial_Idx, PD_S)
     %% PRE CALCULATIONS FOR THE PLAYER TURN
-    [events, ev_hold] = deal({});
-    ev_hold{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "playerTurnStart", GetSecs(), Block_Idx, Trial_Idx);
+    events = CreateEvent("playerTurnStart", Block_Idx, Trial_Idx);
 
     load("colors.mat", "color_list");
     disp("Player turn ")
@@ -132,8 +129,7 @@ function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Tot
                 % If the button is eligible, act accordingly     
                 if ~strcmpi(Pars.target.button_names(button_idx), Disbtn)
                     DrawPhotoDiode(Pars); % Draw the photodiode for the event
-                    ev_hold{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "playerDecisionMade", ...
-                                              GetSecs(), Block_Idx, Trial_Idx);
+                    events=[events; CreateEvent("playerDecisionMade", Block_Idx, Trial_Idx)];
                     
                     % Store the choice, the score and update the totals.
                     choice = Pars.target.button_names(button_idx);
@@ -205,12 +201,7 @@ function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Tot
     % Get the data for the player to be returned
     pl_data = struct('time',elapsed_time, 'score', score, 'choice', choice);
     WaitSecs(1);
-    ev_hold{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "playerTurnEnd", GetSecs(), Block_Idx, Trial_Idx);
-
-    for ev_idx = 1:length(ev_hold)
-        while ~strcmpi(ev_hold{ev_idx}.State, 'finished'); disp(ev_hold{ev_idx}.State); end
-        events = [events; fetchOutputs(ev_hold{ev_idx})];
-    end
+    events = [events; CreateEvent("playerTurnEnd", Block_Idx, Trial_Idx)];
 end
 
 % function [ffset, Ev_Hold]
@@ -231,8 +222,7 @@ end
 %   - events        (A list of the events that happened during the player's turn)   
 function [cpu_data, Totals, events] = cpuTurn(Pars, Disbtn, Button_Scores, Cpu, Totals, Block_Idx, Trial_Idx, PD_S)
     %% PRE-CALCULATIONS FOR CPU TURN
-    [events, ev_hold] = deal({});
-    ev_hold{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "cpuTurnStart", GetSecs(), Block_Idx, Trial_Idx);
+    events = CreateEvent("cpuTurnStart", Block_Idx, Trial_Idx);
 
     % Determine how long the cpu will wait to emulate decision making
     cpu_time = rand()* Pars.trial.cpu_wait_dur + Pars.trial.cpu_wait_s(1);
@@ -268,7 +258,7 @@ function [cpu_data, Totals, events] = cpuTurn(Pars, Disbtn, Button_Scores, Cpu, 
     
     % Wait until the cpu's wait time has finished
     WaitSecs(max(0, cpu_time - PD_S - (GetSecs() - npd_mode_start)));
-    ev_hold{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "cpuDecisionMade", GetSecs(), Block_Idx, Trial_Idx);
+    events = [events; CreateEvent("cpuDecisionMade", Block_Idx, Trial_Idx)];
     
     %% CPU POSTCHOICE ILLUSTRATIONS
     % Make a note of the cpu's choice as an event
@@ -293,12 +283,7 @@ function [cpu_data, Totals, events] = cpuTurn(Pars, Disbtn, Button_Scores, Cpu, 
     
     % save the data of the turn
     cpu_data = struct('score', cpu_score, 'choice', cpu_choice);
-    ev_hold{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "cpuTurnEnd", GetSecs(), Block_Idx, Trial_Idx);
-
-    for ev_idx = 1:length(ev_hold)
-        while ~strcmpi(ev_hold{ev_idx}.State, 'finished'); disp(ev_hold{ev_idx}.State); end
-        events = [events; fetchOutputs(ev_hold{ev_idx})];
-    end
+    events = [events; CreateEvent("cpuTurnEnd", Block_Idx, Trial_Idx)];
 end
 
 % cpuDrawPart1 - Drawing before the cpu makes a choice

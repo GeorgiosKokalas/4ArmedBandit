@@ -57,7 +57,7 @@ function Experiment(Parameters)
     % Carry out each block
     for block_idx = 1:num_blocks
         % Handle Events
-        blev_hold = parfeval(backgroundPool, @CreateEvent, 1, "blockStart", GetSecs(), block_idx, [], cpu_list(cpu_idx));
+        block_events = CreateEvent("blockStart", block_idx, [], cpu_list(cpu_idx));
         
         % Create some variables needed for block storing
         table_name = combos_str(block_idx);                 % Which table entry we will be changing
@@ -73,8 +73,7 @@ function Experiment(Parameters)
         
         % Inform the cpu which of its choices it doesn't have access to
         cpu_list(cpu_idx).Choice_List = erase(cpu_list(cpu_idx).Choice_List, Parameters.disbtn.cpu(str2double(combos(block_idx,3))));
-        
-        block_events = fetchOutputs(blev_hold);
+
          for trial_idx = 1:Parameters.trial.num
             % Run a Trial and obtain the needed data
             [pl_data, cpu_data, block_total, trial_events, abort] = RunTrial(Parameters, disbtn, button_scores, ...
@@ -100,8 +99,7 @@ function Experiment(Parameters)
         % Inform the player that the block has ended
         blockSwitch(Parameters,block_idx, num_blocks);
 
-        blev_hold = parfeval(backgroundPool, @CreateEvent, 1, "blockEnd", GetSecs(), block_idx);
-        block_events = [block_events; fetchOutputs(blev_hold)];
+        block_events = [block_events; CreateEvent("blockEnd", block_idx)];
         
         Parameters.NewEvent(block_events);
         
