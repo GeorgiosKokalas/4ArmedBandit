@@ -145,7 +145,7 @@ classdef CpuPlayerT3 < handle
 
         % The Cheater Behavior
         function cheaterBehavior(obj,button_scores)
-            if rand() < .80
+            if rand() < .55
                 [~, best_index] = max(button_scores);
                 obj.Next_Choice = obj.Choice_List(best_index);
             else
