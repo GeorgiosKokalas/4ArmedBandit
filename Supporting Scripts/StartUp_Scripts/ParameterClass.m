@@ -16,7 +16,7 @@ classdef ParameterClass < handle
             obj.trial = struct;
             obj.target = struct;
             obj.avatars = struct;
-            obj.text = struct;
+            obj.text =    struct;
             obj.disbtn = struct;
             obj.output_dir = fullfile(pwd(),'Output', [Patient_Name, '_' ,datestr(datetime('now'), 'yyyymmdd-HHMM')]);
             obj.exp_events
