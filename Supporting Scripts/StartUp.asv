@@ -3,18 +3,17 @@
 % Returns all the parameters that might be needed for the program to run the trials  
 % Parameters: 
 %   - Patient_Name
-%   - Emu_Num
 % Return Values: 
 %   - parameters (paramters to be used for the experiment)
 
-function parameters = StartUp(Patient_Name)
+function parameters = StartUp(Patient_Name, Emu_Num)
     % Clear the workspace and the screen
     sca;
     close all;
     clc;
     
     % Generate the parameters that will be used in the experiment
-    parameters = InsertParams(Patient_Name);
+    parameters = InsertParams(Patient_Name, Emu_Num);
     
     % The saving Directory probably does not exist, so create it.
     disp(parameters.output_dir);

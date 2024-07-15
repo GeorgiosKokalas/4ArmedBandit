@@ -1,29 +1,30 @@
 % Called by Experiment, Introduction, RunTrial and subscripts within those.
 % Function that draws an icon      
 % Input: 
-%   - Window    Pointer to the window
+%   - Pars      Pointer to the experiment parameters
 %   - Icon_Name File name for the icon
+%   - Rect      A specification of where the image shall be placed
 %   - Rotation  The rotation at which the icon will be drawn
 % Output: None
-function DrawIcon(Window, Icon_Name, Rect, Rotation)
+function DrawIcon(Pars, Icon_Name, Rect, Rotation)
     % If we don't have any dimensions for the picture
     if ~exist('Rect', 'var') || ~isRect(Rect); Rect = [0,0,250,250]; end
     
     % If we don't have a rotation value
     if ~exist('Rotation', 'var'); Rotation = 0; end
     
-    Screen('BlendFunction', Window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
+    Screen('BlendFunction', Pars.screen.window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');
     
     % Load the PNG image with transparency
     [image, ~, alpha] = imread(Icon_Name);
     image(:,:,4) = alpha;
 
     % Make the texture
-    texture = Screen('MakeTexture', Window, image);
+    texture = Screen('MakeTexture', Pars.screen.window, image);
     clear image alpha;
     
-    % Draw the texture to the window
-    Screen('DrawTexture', Window, texture,[],Rect, Rotation);
+    % Draw the texture to the Pars.screen.window
+    Screen('DrawTexture', Pars.screen.window, texture,[],Rect, Rotation);
 end
 
 %% HELPER FUNCTION

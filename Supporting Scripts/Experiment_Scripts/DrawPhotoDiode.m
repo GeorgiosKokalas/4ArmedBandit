@@ -1,13 +1,13 @@
 % Called by Experiment, Introduction, RunTrial and subscripts within those.
 % Function that draws the photodiode and stores the time of the drawing for an event.        
 % Input: 
-%   - Screen_Pars    Parameters for the screen
+%   - Pars   Parameters for the experiment
 % Output: 
-%   - time           When this happened
-function time = DrawPhotoDiode(Screen_Pars)
-    photodiode_rect = [0, Screen_Pars.window_height*(8/9), ...
-                        Screen_Pars.window_width/8, Screen_Pars.window_height];
-    Screen('FillRect', Screen_Pars.window, repmat(255, 1, 4), photodiode_rect);
+%   - time   When this happened
+function time = DrawPhotoDiode(Pars)
+    photodiode_rect = [0, Pars.screen.window_height*(8/9), ...
+                        Pars.screen.window_width/8, Pars.screen.window_height];
+    Screen('FillRect', Pars.screen.window, repmat(255, 1, 4), photodiode_rect);
     time = GetSecs();
 end
 

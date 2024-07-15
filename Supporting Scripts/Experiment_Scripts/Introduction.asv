@@ -1,24 +1,25 @@
 % Function called by Experiment.m
 % Role of function is to introduce the participant to the experiment
 % Parameters: 
-%   - Screen_Pars (parameters for the screen used by the Program)
-%   - Text_Pars  (parameters for the text)
-%   - Targ_Pars  (parameters for the targets)
-% Return Values: 
-%   - player_avatar
+%   - Pars      (A handle/pointer to the parameters)
+% Return Values: None
 
-function [player_avatar] = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
+function Introduction(Pars)
     % Load the colors
     load('colors.mat','color_list');
-    
+    event_holders = {};
+
     %% FIRST MESSAGE
     %% Create the Introductory Message for the Experiment     
-    Screen('TextSize', Screen_Pars.window, 150);
-    DrawFormattedText(Screen_Pars.window, 'Multi Armed Bandit task', 'center', Screen_Pars.center(2)-100, color_list.white);
+    % Store the event
+    event_holders{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "intro1");
+    
+    Screen('TextSize', Pars.screen.window, 150);
+    DrawFormattedText(Pars.screen.window, 'Multi Armed Bandit task', 'center', Pars.screen.center(2)-100, color_list.white);
 
-    Screen('TextSize', Screen_Pars.window, 100);
-    DrawFormattedText(Screen_Pars.window, 'Press any button to continue', 'center', Screen_Pars.center(2)+150, color_list.white);
-    Screen('Flip',Screen_Pars.window);
+    Screen('TextSize', Pars.screen.window, 100);
+    DrawFormattedText(Pars.screen.window, 'Press any button to continue', 'center', Pars.screen.center(2)+150, color_list.white);
+    Screen('Flip',Pars.screen.window);
 
     while ~KbCheck() && ~GetXBox().AnyButton; end
     WaitSecs(0.5);
@@ -26,7 +27,7 @@ function [player_avatar] = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
 
     %% CHARACTER SELECTION
     % Set the appropriate text size for the intro
-    Screen('TextSize', Screen_Pars.window, Text_Pars.size.intro);
+    Screen('TextSize', Pars.screen.window, Pars.text.size.intro);
 
     contd_in = false;   % Continued input check
     controls_message = ['Please select your avatar.\n',...
@@ -43,8 +44,8 @@ function [player_avatar] = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
     img_rects = [img_rects; img_rects+ [0,2,0,2]]; % Create the second row
 
     % Adjust the rects for the screen size
-    img_rects = img_rects .* [Screen_Pars.window_width/8, Screen_Pars.window_height/6,...
-        Screen_Pars.window_width/8, Screen_Pars.window_height/6];
+    img_rects = img_rects .* [Pars.screen.window_width/8, Pars.screen.window_height/6,...
+        Pars.screen.window_width/8, Pars.screen.window_height/6];
 
     % Create a map of all the images
     img_map = [1,2,3;4,5,6];
@@ -52,17 +53,20 @@ function [player_avatar] = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
 
     break_greater_loop = false;
     while ~break_greater_loop 
+        % Store the character selection event
+        event_holders{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "intro2");
+    
         break_greater_loop = true;
         while true
             % Draw each image. Create a green border for the selected one
             for img_idx = 1:6
-                DrawIcon(Screen_Pars.window, ['PlAv', num2str(img_idx), '.png'], img_rects(img_idx, :));
+                DrawIcon(Pars, ['PlAv', num2str(img_idx), '.png'], img_rects(img_idx, :));
                 if sel_img == img_idx
-                    Screen('FrameRect', Screen_Pars.window, color_list.green, img_rects(img_idx, :), 10);
+                    Screen('FrameRect', Pars.screen.window, color_list.green, img_rects(img_idx, :), 10);
                 end
             end
-            DrawFormattedText(Screen_Pars.window, controls_message, 'center', Text_Pars.size.intro, color_list.white);
-            Screen('Flip', Screen_Pars.window);
+            DrawFormattedText(Pars.screen.window, controls_message, 'center', Pars.text.size.intro, color_list.white);
+            Screen('Flip', Pars.screen.window);
 
             % Wait for the XBox Controller signal
             pl_i = GetXBox();
@@ -108,11 +112,12 @@ function [player_avatar] = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
             % Check for selection buttons
             if pl_i.A || pl_i.B || pl_i.X || pl_i.Y; break; end
         end
-        player_avatar = sel_img;
+        Pars.avatars.player_avatar = sel_img;
 
         %% BUTTON SCHEME FAMILIARIZATION
-        % Wait for player input
-        % KbStrokeWait();
+        % Store the character selection event
+        event_holders{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "intro3");
+
         break_loop = false;
         controls_message = ['Familiarize yourself with the controls. \n',...
             'When ready press any other button'];
@@ -123,31 +128,31 @@ function [player_avatar] = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
             % If it is early enough draw the photodiode
 
             pl_i = GetXBox();
-            for button_idx = 1:length(Targ_Pars.button_names)
-                color = Targ_Pars.colors(button_idx,:);
-                if pl_i.(Targ_Pars.button_names(button_idx))
+            for button_idx = 1:length(Pars.target.button_names)
+                color = Pars.target.colors(button_idx,:);
+                if pl_i.(Pars.target.button_names(button_idx))
                     color = color/0.8;
                 end
 
-                Screen('FillOval',Screen_Pars.window, color, Targ_Pars.rects(button_idx,:));
+                Screen('FillOval',Pars.screen.window, color, Pars.target.rects(button_idx,:));
                 
-                if pl_i.(Targ_Pars.button_names(button_idx))
-                    Screen('FrameOval',Screen_Pars.window, repmat(255,1,4), Targ_Pars.ring_rects(button_idx,:), 10);
+                if pl_i.(Pars.target.button_names(button_idx))
+                    Screen('FrameOval',Pars.screen.window, repmat(255,1,4), Pars.target.ring_rects(button_idx,:), 10);
                 end
 
-                DrawIcon(Screen_Pars.window, ['Letter_', Targ_Pars.button_names(button_idx), '.png'],...
-                    Targ_Pars.rects(button_idx,:));
+                DrawIcon(Pars, ['Letter_', Pars.target.button_names(button_idx), '.png'],...
+                    Pars.target.rects(button_idx,:));
             end
 
-            Screen('TextSize', Screen_Pars.window, Text_Pars.size.intro3)
-            DrawFormattedText2(controls_message, 'win', Screen_Pars.window, 'sx', 'center', 'sy', 'top', ...
+            Screen('TextSize', Pars.screen.window, Pars.text.size.intro3)
+            DrawFormattedText2(controls_message, 'win', Pars.screen.window, 'sx', 'center', 'sy', 'top', ...
                                'xalign', 'center', 'baseColor', color_list.white);
 
-            Screen('Flip',Screen_Pars.window);
+            Screen('Flip',Pars.screen.window);
             
             [key_pressed, ~, key_code] = KbCheck();
             break_loop = key_pressed || (pl_i.AnyButton && ~pl_i.A && ~pl_i.B && ~pl_i.X && ~pl_i.Y);
-            if pl_i.JoystickRThumb || pl_i.JoystickLThumb || key_code(KbName('r')
+            if pl_i.JoystickRThumb || pl_i.JoystickLThumb || key_code(KbName('r')) == 1
                 break_greater_loop = false;
             end
             % break_loop = KbCheck() || pl_i.RB || pl_i.LB || pl_i.RT > 0.5 || pl_i.LT > 0.5 || ...
@@ -155,6 +160,11 @@ function [player_avatar] = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
             %              ;
         end
         WaitSecs(0.5);
+    end
+
+    % save all of the events
+    for ev_idx = 1:length(event_holders)
+        Pars.NewEvent(fetchOutputs(event_holders{ev_idx}));
     end
 end
 

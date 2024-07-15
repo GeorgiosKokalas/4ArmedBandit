@@ -3,10 +3,8 @@
 % If values are invalid they are updated. More parameters are also added.
 % Parameters: 
 %   - in_pars (struct that contains all inserted parameters)
-% Return Values: 
-%   - in_pars (in_pars after validation)
-
-function in_pars = ValidateInsertParams(in_pars, Patient_Name)
+% Return Values: None
+function ValidateInsertParams(in_pars)
     load('colors.mat','color_list');
     
     %in_pars.screen extra variables (dependent on user-defined variables)
@@ -237,10 +235,6 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
         disp("WARNING: empty string provided for in_pars.disbtn.cpu. Assuming this is done on purpose.")
         in_pars.disbtn.cpu = '0';
     end
-
-
-    % CREATING OUTPUT DIRECTORY 
-    in_pars.output_dir = fullfile(pwd(),'Output', [Patient_Name, '_' ,datestr(datetime('now'), 'yyyymmdd-HHMM')]);
 end
 
 

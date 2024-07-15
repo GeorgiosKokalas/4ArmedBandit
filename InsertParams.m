@@ -3,16 +3,12 @@
 % This means that any value that can be safely changed by the user should be done here. 
 % Parameters: 
 %   - Patient_Name (The name of the patient)
+%   - Emu_Num      (The number of the experiment in the EMU)
 % Return Values: 
 %   - in_pars (struct that contains all inserted parameters)
 
 function in_pars = InsertParams(Patient_Name)
-    in_pars = struct;
-    in_pars.screen = struct;
-    in_pars.target = struct;
-    in_pars.player = struct;
-    in_pars.cross = struct;
-    in_pars.trial = struct;
+    in_pars = ParameterClass(Patient_Name);
     load('colors.mat','color_list');
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -39,7 +35,7 @@ function in_pars = InsertParams(Patient_Name)
     % in_pars.text.size.score_count = 50;     % POSSIBLY UNUSED   
     in_pars.text.size.button_score = 300;   % Integer - Determines the size of the score displayed on each button
     in_pars.text.size.title = 25;           % Integer - Determines the size of the title below each avatar
-    in_pars.text.size.scores = 55;          % Integer - Determines the size of the total scores displayed next to the avatars
+    in_pars.text.size.scores = 45;          % Integer - Determines the size of the total scores displayed next to the avatars
     in_pars.text.size.turn_order = 80;      % Integer - Determines the size of the text displaying the turn order
     in_pars.text.size.score_mode = 80;      % Integer - Determines the size of the text showing the score mode up top
     in_pars.text.size.score_totals = 100;   % Integer - Determines the variable Totals value displayed on the bottom
@@ -59,12 +55,12 @@ function in_pars = InsertParams(Patient_Name)
     in_pars.target.score_change_rng = 5;    % Integer - How likely each score is to change
     
     in_pars.disbtn.player = 'A';   % Character(s) - Which button(s) will be disabled for the player
-    in_pars.disbtn.cpu = '';       % Character(s) - Which button(s) will be disabled for the cpu
+    in_pars.disbtn.cpu = '';       % Character(s) - Which button(s) will be disabled for the cpu 
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % End of Settings %
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    in_pars = ValidateInsertParams(in_pars, Patient_Name);
+    ValidateInsertParams(in_pars);
 end
 

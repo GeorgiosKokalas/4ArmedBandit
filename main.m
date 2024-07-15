@@ -3,12 +3,22 @@
 % The program allows the user to insert variables. This happens in 'InsertParams.m' 
 
 function main(Patient_Name)
+    % Start a parallel pool if it is not already started
+    if isempty(gcp('nocreate')); parpool; end
+
+    % Call the task Start Event 
+    parfeval(backgroundPool,@CreateEvent, 1, "taskStart", GetSecs());
+    
+    if ~exist("Patient_Name","var"); Patient_Name = 'TEST'; end
+
     % Add all the directories in the path just in case
     cur_script = mfilename('fullpath');
     cur_dir = cur_script(1:end-length(mfilename));
     cd(cur_dir);
     addpath(genpath(cur_dir));
-   
+    
+    % Store the task Start Event
+
     % Start up the experiment and provide the parameters that will be used in the experiment       
     parameters = StartUp(Patient_Name);
     
@@ -17,8 +27,15 @@ function main(Patient_Name)
     
     KbStrokeWait();
     sca;  
+    
+    % Store the saves
+    parfeval(backgroundPool, @CreateEvent, 1, "taskEnd", GetSecs())
+
+    pool = gcp('nocreate');
+    if ~isempty(pool); delete(pool); end
 
     ShutDown(parameters);
+    
 
     % Remove all the directories from the path
     % rmpath(genpath(cur_dir));

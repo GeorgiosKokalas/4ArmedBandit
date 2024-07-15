@@ -1,0 +1,25 @@
+classdef ParameterClass
+    properties
+        screen
+        trial
+        target
+        avatars
+        text
+        disbtn
+        output_dir
+        event_title
+    end
+
+    methods
+        function obj = ParameterClass(Patient_Name,Emu_Num)
+            obj.screen = struct;
+            obj.trial = struct;
+            obj.target = struct;
+            obj.avatars = struct;
+            obj.text = struct;
+            obj.disbtn = table('Size',[1,2],'VariableTypes',repmat("char", 1,2),'VariableNames',["player", "cpu"]);
+            obj.output_dir = fullfile(pwd(),'Output', [Patient_Name, '_' ,datestr(datetime('now'), 'yyyymmdd-HHMM')]);
+            obj.event_title = sprintf('EMU%04d-%s:', Emu_Num, Patient_Name);
+        end
+    end
+end

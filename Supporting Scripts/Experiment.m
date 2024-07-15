@@ -50,29 +50,32 @@ function Experiment(Parameters)
     %% Carry out the task
     % Carry out the Introduction to the task
     if Parameters.trial.show_intro
-        [Parameters.avatars.player] = Introduction(Parameters.screen, Parameters.text, Parameters.target);
+        Introduction(Parameters);
     end
     % return
 
     % Carry out each block
     for block_idx = 1:num_blocks
+        % Handle Events
+        blev_hold = parfeval(backgroundPool, @CreateEvent, 1, "blockStart", GetSecs(), block_idx, [], cpu_list(cpu_idx));
+        
         % Create some variables needed for block storing
         table_name = combos_str(block_idx);                 % Which table entry we will be changing
         block_total = struct('player', 0, 'cpu', 0);        % The total scores during the block
-        block_events = {"Block_Start", GetSecs()};          % All of the events occuring during the block
-        button_scores = GetScores(length(Parameters.target.button_names), ...  % The scores for each button
+        [button_scores, ~] = GetScoresUpdate(length(Parameters.target.button_names), ...  % The scores for each button
                         Parameters.target.score_change_rng, true);
         cpu_idx = str2double(combos(block_idx,1));          % the index of the cpu that we will be using
         disbtn = struct('player', Parameters.disbtn.player(str2double(combos(block_idx,2))), ...  % The disabled buttons for the player and cpu in the block
                         'cpu', Parameters.disbtn.cpu(str2double(combos(block_idx,3))));
         
         % Generate the message for the start of the block to the player
-        blockStart(Parameters.screen.window,block_idx, num_blocks, Parameters.text.size.intro, cpu_list(cpu_idx).Name);  
+        blockStart(Parameters ,block_idx, num_blocks, cpu_list(cpu_idx).Name);  
         
         % Inform the cpu which of its choices it doesn't have access to
         cpu_list(cpu_idx).Choice_List = erase(cpu_list(cpu_idx).Choice_List, Parameters.disbtn.cpu(str2double(combos(block_idx,3))));
-
-        for trial_idx = 1:Parameters.trial.num
+        
+        block_events = fetchOutputs(blev_hold);
+         for trial_idx = 1:Parameters.trial.num
             % Run a Trial and obtain the needed data
             [pl_data, cpu_data, block_total, trial_events, abort] = RunTrial(Parameters, disbtn, button_scores, ...
                                                                       cpu_list(cpu_idx), block_total, ...
@@ -82,7 +85,7 @@ function Experiment(Parameters)
             block_events = [block_events; trial_events];
 
             % Change the values of the scores based on the RNG
-            button_scores = GetScores(length(Parameters.target.button_names), Parameters.target.score_change_rng);
+            [button_scores, ~] = GetScoresUpdate(length(Parameters.target.button_names), Parameters.target.score_change_rng);
             
             % Save the choices of the player on the tables
             pl_choices.(table_name)(trial_idx) = pl_data.choice;
@@ -95,7 +98,12 @@ function Experiment(Parameters)
             
         end
         % Inform the player that the block has ended
-        blockSwitch(Parameters.screen.window,block_idx, num_blocks, Parameters.text.size.intro);
+        blockSwitch(Parameters,block_idx, num_blocks);
+
+        blev_hold = parfeval(backgroundPool, @CreateEvent, 1, "blockEnd", GetSecs(), block_idx);
+        block_events = [block_events; fetchOutputs(blev_hold)];
+        
+        Parameters.NewEvent(block_events);
         
         % Reset the Cpu player for future blocks
         cpu_list(cpu_idx).reset();
@@ -111,7 +119,7 @@ function Experiment(Parameters)
         block_pl_times    = pl_times.(table_name);
         block_cpu_scores  = cpu_scores.(table_name);
         block_cpu_choices = cpu_choices.(table_name);
-        exp_events = [exp_events; block_events];
+        exp_events        = Parameters.exp_events;
 
         % Save the block results
         save(block_filename, "block_pl_choices", "block_pl_scores", "block_pl_times", ...
@@ -138,22 +146,21 @@ end
 %% HELPER FUNCTIONS
 % blockStart - prints a message at the start of each block
 % Arguments:
-%   - Win        (The pointer to the PTB window
+%   - Pars       (Reference to the parameters)
 %   - Block_Idx  (The block number)
 %   - Num_Blocks (The total number of blocks)
-%   - Text_Size  (Text size parameters)
 %   - Cpu_Name   (The name of the cpu player)
 % Outputs: None
-function blockStart(Win, Block_Idx, Num_Blocks, Text_Size, Cpu_Name)
+function blockStart(Pars, Block_Idx, Num_Blocks, Cpu_Name)
     % Generate the text to be printed
     text = sprintf('Starting Block %d out of %d.\n You will be playing with %s.\n\n', ...
                     Block_Idx, Num_Blocks, Cpu_Name);
     text = sprintf('%sPress any button to continue.', text);
     
     % Print the text and show it
-    Screen('TextSize', Win, Text_Size);
-    DrawFormattedText(Win, text, 'center', 'center', 252:255);
-    Screen('Flip', Win);
+    Screen('TextSize', Pars.screen.window, Pars.text.size.score_totals);
+    DrawFormattedText(Pars.screen.window, text, 'center', 'center', 252:255);
+    Screen('Flip', Pars.screen.window);
     
     % Wait for 2 seconds or until a button is pressed
     start = GetSecs();
@@ -165,12 +172,11 @@ end
 
 % blockSwitch - prints a message at the end of each block (except the final one)     
 % Arguments:
-%   - Win        (The pointer to the PTB window
+%   - Pars       (The pointer to the experiment parameters)
 %   - Block_Idx  (The block number)
 %   - Num_Blocks (The total number of blocks)
-%   - Text_Size  (Text size parameters)
 % Outputs: None
-function blockSwitch(Win, Block_Idx, Num_Blocks, Text_Size)
+function blockSwitch(Pars, Block_Idx, Num_Blocks)
     % If this is the final block, exit the function
     if Block_Idx == Num_Blocks; return; end
     
@@ -179,9 +185,9 @@ function blockSwitch(Win, Block_Idx, Num_Blocks, Text_Size)
     text = sprintf('%sPress any button to continue.', text);
     
     % Print the text and show it
-    Screen('TextSize', Win, Text_Size);
-    DrawFormattedText(Win, text, 'center', 'center', 252:255);
-    Screen('Flip', Win);
+    Screen('TextSize', Pars.screen.window, Pars.text.size.score_totals);
+    DrawFormattedText(Pars.screen.window, text, 'center', 'center', 252:255);
+    Screen('Flip', Pars.screen.window);
     
     % Wait for 2 seconds or until a button is pressed
     start = GetSecs();
