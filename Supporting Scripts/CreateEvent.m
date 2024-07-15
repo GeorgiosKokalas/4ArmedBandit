@@ -1,6 +1,6 @@
 % Function called by Experiment.m,  Introduction.m, RunTrial.m
 % Function creates an event, and is called in parallel
-function event_cell = CreateEvent(Type, Time, Block_Idx, Trial_Idx, Cpu)
+function event_cell = CreateEvent(Type, Block_Idx, Trial_Idx, Cpu)
     % Apply the appropriate event message based on the type of the event
     event_msg = '';
     switch string(Type)
@@ -41,7 +41,7 @@ function event_cell = CreateEvent(Type, Time, Block_Idx, Trial_Idx, Cpu)
         case "cpuTurnEnd"
             event_msg = sprintf("Block %d, Trial %d: CPU Turn Ended", Block_Idx, Trial_Idx);
         otherwise
-            event_cell = {"Error", Time};
+            event_cell = {"Error", GetSecs()};
             disp("Event Call not recognized. Aborting...")
             return;
     end
@@ -49,10 +49,10 @@ function event_cell = CreateEvent(Type, Time, Block_Idx, Trial_Idx, Cpu)
     
     % Create the return value to be a cell with the event and the current
     try
-        event_cell = {event_msg, Time};
+        event_cell = {event_msg, GetSecs()};
     catch ME
         disp("Event cell failed to create")
-        event_cell = {ME.message, Time+40000000000};
+        event_cell = {ME.message, GetSecs()+40000000000};
     end
 
     % Try to send a BlackRock comment twice for good measure
