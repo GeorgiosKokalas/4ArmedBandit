@@ -41,7 +41,7 @@ end
 %end
 
 %disp('Dont forget to move files to subject directory!! also update the code so this happens automatically')
-rmpath(genpath('C:\Users\EMU - Behavior\Documents\MATLAB\Behavioral Tasks\BH\4MAB'))
+%rmpath(genpath('C:\Users\EMU - Behavior\Documents\MATLAB\Behavioral Tasks\BH\4MAB'))
 end
 
 
