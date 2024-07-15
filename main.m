@@ -9,8 +9,10 @@ function main(Patient_Name)
     cd(cur_dir);
     addpath(genpath(cur_dir));
    
+    % Start up the experiment and provide the parameters that will be used in the experiment       
     parameters = StartUp(Patient_Name);
     
+    % Run the experiment
     Experiment(parameters);
     
     KbStrokeWait();

@@ -28,27 +28,34 @@ function in_pars = InsertParams(Patient_Name)
     in_pars.screen.window_width = 0;                % Integer - Determines the Width of the window. 0 will make the program FullScreen
     in_pars.screen.default_text_font = 'Helvetica'; % String - Determines the type of font used in the experiment
     
-    in_pars.text.size.default = 40;                 % Integer - Determines the default text size
-    in_pars.text.size.intro = 45;
-    in_pars.text.size.score_count = 50;
-    in_pars.text.size.button_score = 300;
-    in_pars.text.size.title = 20;
-    in_pars.text.size.scores = 50;
+    % Text parameters
+    % Text Size parameters - Determine the size of text in given situations
+    in_pars.text.size.default = 40;         % Integer - Determines the default text size
+    in_pars.text.size.intro = 45;           % Integer - Determines the text size during the Introduction
+    in_pars.text.size.intro3 = 70;          % Integer - Determines the text size during the 3rd part of the Introduction
+    in_pars.text.size.score_count = 50;     % POSSIBLY UNUSED   
+    in_pars.text.size.button_score = 300;   % Integer - Determines the size of the score displayed on each button
+    in_pars.text.size.title = 25;           % Integer - Determines the size of the title below each avatar
+    in_pars.text.size.scores = 55;          % Integer - Determines the size of the total scores displayed next to the avatars
+    in_pars.text.size.turn_order = 80;      % Integer - Determines the 
+    in_pars.text.size.score_mode = 80;
+    in_pars.text.size.score_totals = 100;
 
     in_pars.trial.show_intro = true;
     in_pars.trial.duration_s = 20;                  % Positive integer - Determines how long someone has to provide an answer
     in_pars.trial.cpu_wait_s = [2, 4];              % Vector of 2 whole numbers - Determines how long the player waits for the opponent input
     in_pars.trial.num = 1;
+    in_pars.trial.photodiode_dur_s = 0.5;
 
-    in_pars.target.radius_percent = 90;                % Positive integer - Give 0 for max radius
+    in_pars.target.radius_percent = 95;                % Positive integer - Give 0 for max radius
     in_pars.target.colors = [color_list.yellow * 0.8;...
                              color_list.red    * 0.8;...
                              color_list.green  * 0.8;...
                              color_list.blue   * 0.8];  % 4 RGBA values
-    in_pars.target.score_change_rng = 5;     % Vector of 4 Positive integers 1-10
+    in_pars.target.score_change_rng = 5;    % Vector of 4 Positive integers 1-10
     
     in_pars.disbtn.player = 'A';
-    in_pars.disbtn.cpu = 'Y';
+    in_pars.disbtn.cpu = '';
 
     in_pars = ValidateInsertParams(in_pars, Patient_Name);
 end

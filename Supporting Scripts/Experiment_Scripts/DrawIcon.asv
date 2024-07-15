@@ -27,13 +27,9 @@ function DrawIcon(Window, Icon_Name, Rect, Rotation)
 end
 
 %% HELPER FUNCTION
-% isRect - Determine if a rect is in fact a rect    
-% Input
-%   - Rect (The rect)
-% Output
-%   - output (The decision of the function)
-function output = isRect(Rect)
-   output = isnumeric(Rect);
-   output = output && height(Rect) == 1;
-   output = output && width(Rect) == 4;
+%i
+function Output = isRect(Rect)
+   Output = isnumeric(Rect);
+   Output = Output && height(Rect) == 1;
+   Output = Output && width(Rect) == 4;
 end

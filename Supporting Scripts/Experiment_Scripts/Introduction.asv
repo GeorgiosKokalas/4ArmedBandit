@@ -3,33 +3,21 @@
 % Parameters: 
 %   - Screen_Pars (parameters for the screen used by the Program)
 %   - Text_Pars  (parameters for the text)
-% Return Values: None
+%   - Targ_Pars  (parameters for the targets)
+% Return Values: 
+%   - player_avatar
 
-function [player_avatar, events] = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
+function [player_avatar] = Introduction(Screen_Pars, Text_Pars, Targ_Pars)
     % Load the colors
     load('colors.mat','color_list');
-    events = {};
     
     %% FIRST MESSAGE
-    % Set the appropriate text size for the intro
-    Screen('TextSize', Screen_Pars.window, Text_Pars.size.intro);
+    %% Create the Introductory Message for the Experiment     
+    Screen('TextSize', Screen_Pars.window, 150);
+    DrawFormattedText(Screen_Pars.window, 'Multi Armed Bandit task', 'center', Screen_Pars.center(2)-100, color_list.white);
 
-    % % Create the Introductory Message for the Experiment 
-    greeting_message = ['Hello, welcome to the multi armed bandit task.\n',...
-                        'Your goal is to select the buttons that yield the maximum points.\n',...
-                        'The 4 buttons are mapped to the four buttons of your controller.\n', ...
-                        'One of these choices will be grayed out and unavailable.\n',...
-                        'NOTE: Points yielded by any button CAN change over time.\n\n\n',...
-                        'You will be playing against 1 player at a time.\n', ...
-                        'You can maximize your own score by observing their playstyle.\n\n\n', ...
-                        'Press any buttons to proceed.'];
-                        
-    DrawFormattedText(Screen_Pars.window, greeting_message, 'center', Screen_Pars.center(2)-200, color_list.white);
-    events = {"Intro_Part1", DrawPhotoDiode(Screen_Pars)};
-    Screen('Flip',Screen_Pars.window);
-    WaitSecs(0.3)
-
-    DrawFormattedText(Screen_Pars.window, greeting_message, 'center', Screen_Pars.center(2)-200, color_list.white);
+    Screen('TextSize', Screen_Pars.window, 100);
+    DrawFormattedText(Screen_Pars.window, 'Press any button to continue', 'center', Screen_Pars.center(2)+150, color_list.white);
     Screen('Flip',Screen_Pars.window);
 
     while ~KbCheck() && ~GetXBox().AnyButton; end
@@ -37,6 +25,9 @@ function [player_avatar, events] = Introduction(Screen_Pars, Text_Pars, Targ_Par
     
 
     %% CHARACTER SELECTION
+    % Set the appropriate text size for the intro
+    Screen('TextSize', Screen_Pars.window, Text_Pars.size.intro);
+
     contd_in = false;   % Continued input check
     controls_message = ['Please select your avatar.\n',...
                         'Use the Dpad or any of the Joysticks to navigate\n',...
@@ -58,106 +49,112 @@ function [player_avatar, events] = Introduction(Screen_Pars, Text_Pars, Targ_Par
     % Create a map of all the images
     img_map = [1,2,3;4,5,6];
     sel_img = 1;
-    
-    char_sel_start = GetSecs();
-    events = [events; {"Character Selection Start", char_sel_start}];
-    while true
-        % If it is early enough draw the photodiode
-        if GetSecs() - char_sel_start < 0.3; DrawPhotoDiode(Screen_Pars); end
 
-        % Draw each image. Create a green border for the selected one
-        for img_idx = 1:6
-            DrawIcon(Screen_Pars.window, ['PlAv', num2str(img_idx), '.png'], img_rects(img_idx, :));
-            if sel_img == img_idx
-                Screen('FrameRect', Screen_Pars.window, color_list.green, img_rects(img_idx, :), 10);
+    break_greater_loop = false;
+    while ~break_greater_loop 
+        break_greater_loop = true;
+        while true
+            % Draw each image. Create a green border for the selected one
+            for img_idx = 1:6
+                DrawIcon(Screen_Pars.window, ['PlAv', num2str(img_idx), '.png'], img_rects(img_idx, :));
+                if sel_img == img_idx
+                    Screen('FrameRect', Screen_Pars.window, color_list.green, img_rects(img_idx, :), 10);
+                end
             end
+            DrawFormattedText(Screen_Pars.window, controls_message, 'center', Text_Pars.size.intro, color_list.white);
+            Screen('Flip', Screen_Pars.window);
+
+            % Wait for the XBox Controller signal
+            pl_i = GetXBox();
+
+            % Prevent player from continuously giving input
+            contd_in_cond = ~pl_i.AnyButton && abs(pl_i.JoystickRX) < 0.5 && abs(pl_i.JoystickRY) < 0.5 &&...
+                abs(pl_i.JoystickLX) < 0.5 && abs(pl_i.JoystickLY) < 0.5;
+            if contd_in_cond; contd_in = false; end
+            if contd_in; continue; end
+
+            % Navigate the Images using the DPad
+            try
+                [new_img_y, new_img_x] = find(img_map == sel_img);
+
+                % Observe player movement from joysticks and DPad
+                down_cond = pl_i.DPadDown || (pl_i.JoystickRY > 0.5 && abs(pl_i.JoystickRX) < 0.5) ||...
+                    (pl_i.JoystickLY > 0.5 && abs(pl_i.JoystickLX) < 0.5);
+                up_cond = pl_i.DPadUp || (pl_i.JoystickRY < -0.5 && abs(pl_i.JoystickRX) < 0.5) ||...
+                    (pl_i.JoystickLY < -0.5 && abs(pl_i.JoystickLX) < 0.5);
+                right_cond = pl_i.DPadRight || (pl_i.JoystickRX > 0.5 && abs(pl_i.JoystickRY) < 0.5) ||...
+                    (pl_i.JoystickLX > 0.5 && abs(pl_i.JoystickLY) < 0.5);
+                left_cond = pl_i.DPadLeft || (pl_i.JoystickRX < -0.5 && abs(pl_i.JoystickRY) < 0.5) ||...
+                    (pl_i.JoystickLX < -0.5 && abs(pl_i.JoystickLY) < 0.5);
+                % Move the player based on their input
+                if     down_cond;  new_img_y = new_img_y + 1;
+                elseif up_cond;    new_img_y = new_img_y - 1;
+                elseif right_cond; new_img_x = new_img_x + 1;
+                elseif left_cond;  new_img_x = new_img_x - 1;
+                end
+                sel_img = img_map(new_img_y, new_img_x);
+
+                % Store the fact that we already moved
+                if up_cond || down_cond || left_cond || right_cond
+                    contd_in = true;
+                end
+
+                % DEBUG
+                % disp([new_img_x, new_img_y]);
+                % disp(sel_img);
+            catch
+            end
+
+            % Check for selection buttons
+            if pl_i.A || pl_i.B || pl_i.X || pl_i.Y; break; end
         end
-        DrawFormattedText(Screen_Pars.window, controls_message, 'center', Text_Pars.size.intro, color_list.white);
-        Screen('Flip', Screen_Pars.window);
+        player_avatar = sel_img;
 
-        % Wait for the XBox Controller signal
-        pl_i = GetXBox();
+        %% BUTTON SCHEME FAMILIARIZATION
+        % Wait for player input
+        % KbStrokeWait();
+        break_loop = false;
+        controls_message = ['Familiarize yourself with the controls. \n',...
+            'When ready press any other button'];
 
-        % Prevent player from continuously giving input
-        contd_in_cond = ~pl_i.AnyButton && abs(pl_i.JoystickRX) < 0.5 && abs(pl_i.JoystickRY) < 0.5 &&...
-            abs(pl_i.JoystickLX) < 0.5 && abs(pl_i.JoystickLY) < 0.5;
-        if contd_in_cond; contd_in = false; end
-        if contd_in; continue; end
+        in_fam_start = GetSecs();
 
-        % Navigate the Images using the DPad
-        try
-            [new_img_y, new_img_x] = find(img_map == sel_img);
+        while ~break_loop
+            % If it is early enough draw the photodiode
 
-            % Observe player movement from joysticks and DPad
-            down_cond = pl_i.DPadDown || (pl_i.JoystickRY > 0.5 && abs(pl_i.JoystickRX) < 0.5) ||...
-                (pl_i.JoystickLY > 0.5 && abs(pl_i.JoystickLX) < 0.5);
-            up_cond = pl_i.DPadUp || (pl_i.JoystickRY < -0.5 && abs(pl_i.JoystickRX) < 0.5) ||...
-                (pl_i.JoystickLY < -0.5 && abs(pl_i.JoystickLX) < 0.5);
-            right_cond = pl_i.DPadRight || (pl_i.JoystickRX > 0.5 && abs(pl_i.JoystickRY) < 0.5) ||...
-                (pl_i.JoystickLX > 0.5 && abs(pl_i.JoystickLY) < 0.5);
-            left_cond = pl_i.DPadLeft || (pl_i.JoystickRX < -0.5 && abs(pl_i.JoystickRY) < 0.5) ||...
-                (pl_i.JoystickLX < -0.5 && abs(pl_i.JoystickLY) < 0.5);
+            pl_i = GetXBox();
+            for button_idx = 1:length(Targ_Pars.button_names)
+                color = Targ_Pars.colors(button_idx,:);
+                if pl_i.(Targ_Pars.button_names(button_idx))
+                    color = color/0.8;
+                end
 
-            % Move the player based on their input
-            if down_cond;      new_img_y = new_img_y + 1;
-            elseif up_cond;    new_img_y = new_img_y - 1;
-            elseif right_cond; new_img_x = new_img_x + 1;
-            elseif left_cond;  new_img_x = new_img_x - 1;
+                Screen('FillOval',Screen_Pars.window, color, Targ_Pars.rects(button_idx,:));
+                
+                if pl_i.(Targ_Pars.button_names(button_idx))
+                    Screen('FrameOval',Screen_Pars.window, repmat(255,1,4), Targ_Pars.ring_rects(button_idx,:), 10);
+                end
+
+                DrawIcon(Screen_Pars.window, ['Letter_', Targ_Pars.button_names(button_idx), '.png'],...
+                    Targ_Pars.rects(button_idx,:));
             end
 
-            % Store the fact that we already moved
-            if up_cond || down_cond || left_cond || right_cond
-                contd_in = true;
-            end
+            Screen('TextSize', Screen_Pars.window, Text_Pars.size.intro3)
+            DrawFormattedText2(controls_message, 'win', Screen_Pars.window, 'sx', 'center', 'sy', 'top', ...
+                               'xalign', 'center', 'baseColor', color_list.white);
 
-            % DEBUG
-            % disp([new_img_x, new_img_y]);
-            % sel_img = img_map(new_img_y, new_img_x);
-            % disp(sel_img);
-        catch
-            %     disp(ME)
-            %     disp('error');
+            Screen('Flip',Screen_Pars.window);
+            
+            [key_pressed, ~, key_code] = KbCheck();
+            break_loop = key_pressed || (pl_i.AnyButton && ~pl_i.A && ~pl_i.B && ~pl_i.X && ~pl_i.Y);
+            if pl_i.JoystickRThumb || pl_i.JoystickLThumb || key_code(KbName('r')
+                break_greater_loop = false;
+            end
+            % break_loop = KbCheck() || pl_i.RB || pl_i.LB || pl_i.RT > 0.5 || pl_i.LT > 0.5 || ...
+            %              pl_i.DPadDown || pl_i.DPadLeft || pl_i.DPadUp || pl_i.DPadRight || ...
+            %              ;
         end
-
-        % Check for selection buttons
-        if pl_i.A || pl_i.B || pl_i.X || pl_i.y; break; end
+        WaitSecs(0.5);
     end
-    player_avatar = sel_img;
-
-    %% BUTTON SCHEME FAMILIARIZATION
-    % Wait for player input
-    % KbStrokeWait();
-    break_loop = false;
-    controls_message = ['Familiarize yourself with the controls. \n',...
-                        'When ready press any other button'];                  
-    in_fam_start = GetSecs();
-    events = [events; {"Character Selection Start", char_sel_start}];
-
-    while ~break_loop
-        % If it is early enough draw the photodiode
-        if GetSecs() - in_fam_start < 0.3; DrawPhotoDiode(Screen_Pars); end
-
-        pl_i = GetXBox();
-        for button_idx = 1:length(Targ_Pars.button_names)
-            color = Targ_Pars.colors(button_idx,:);
-            if pl_i.(Targ_Pars.button_names(button_idx))
-                color = color/0.8;
-            end
-
-            Screen('FillOval',Screen_Pars.window, color, Targ_Pars.rects(button_idx,:));
-
-            DrawIcon(Screen_Pars.window, ['Letter_', Targ_Pars.button_names(button_idx), '.png'],...
-                Targ_Pars.rects(button_idx,:));
-        end
-        DrawFormattedText(Screen_Pars.window, controls_message, 0, Text_Pars.size.intro, color_list.white);
-
-        Screen('Flip',Screen_Pars.window);
-
-        break_loop = KbCheck() || (pl_i.AnyButton && ~pl_i.A && ~pl_i.B && ~pl_i.X && ~pl_i.Y);
-        % break_loop = KbCheck() || pl_i.RB || pl_i.LB || pl_i.RT > 0.5 || pl_i.LT > 0.5 || ...
-        %              pl_i.DPadDown || pl_i.DPadLeft || pl_i.DPadUp || pl_i.DPadRight || ...
-        %              ;
-    end
-    WaitSecs(0.5);
 end
 

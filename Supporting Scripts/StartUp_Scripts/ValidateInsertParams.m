@@ -1,9 +1,10 @@
 % Function called by: InsertParams.m
-% Role of function is to validate all user-inserted parameters
-% Parameters: in_pars (struct that contains all inserted parameters)
-% Return Values: in_pars (in_pars after validation)
-% Function that is aimed to validate all inserted parameters by the user. 
-%   If values are invalid they are updated. More parameters are also added.
+% Role of function is to validate to validate all inserted parameters by the user. 
+% If values are invalid they are updated. More parameters are also added.
+% Parameters: 
+%   - in_pars (struct that contains all inserted parameters)
+% Return Values: 
+%   - in_pars (in_pars after validation)
 
 function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     load('colors.mat','color_list');
@@ -40,7 +41,7 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     end
     
     % change the value of custom_screen_ based on the value of height and width
-    make_custom_screen = isnat(in_pars.screen.window_height) && ...          & too long for 1 line 
+    make_custom_screen = isnat(in_pars.screen.window_height) && ...        
         isnat(in_pars.screen.window_width) && ...
         in_pars.screen.window_height <= in_pars.screen.screen_height && ...
         in_pars.screen.window_width <= in_pars.screen.screen_width;
@@ -69,7 +70,6 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
         end
     end
 
-
     %in_pars.trial - VALUE EVALUATION
     % Evaluating show_intro
     if ~isscalar(in_pars.trial.show_intro) || ~islogical(in_pars.trial.show_intro)
@@ -78,10 +78,10 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     end
 
     % Evaluating duration_s
-    if ~isnat(in_pars.trial.duration_s)
-        disp("Inoperable value provided for in_pars.trial.duration_s. Applying default...");
-        in_pars.trial.duration_s = 20;
-    end
+    % if ~isnat(in_pars.trial.duration_s)
+    %     disp("Inoperable value provided for in_pars.trial.duration_s. Applying default...");
+    %     in_pars.trial.duration_s = 20;
+    % end
 
     % Evaluating cpu_wait_s
     if ~isnumlist(in_pars.trial.cpu_wait_s, "whole") || in_pars.trial.cpu_wait_s(1) > in_pars.trial.cpu_wait_s(2)
@@ -133,24 +133,62 @@ function in_pars = ValidateInsertParams(in_pars, Patient_Name)
     end   
 
     % extra variables for in_pars.target
-    w_width = in_pars.screen.window_width;
-    w_height = in_pars.screen.window_height;
-    shorter_dist = min([sqrt( (w_width/4)^2 + (w_height/4)^2 ), w_width/2, w_height/ 2]);
-    in_pars.target.radius = max(20, (shorter_dist/2)*(in_pars.target.radius_percent/100));
-
     x = in_pars.screen.window_width;
-    y = in_pars.screen.window_height;
-    r = in_pars.target.radius;
-    coords = [x/2, y/4; 3*x/4, y/2; x/2, 3*y/4; x/4, y/2];
+    w_height = in_pars.screen.window_height;
+    y = w_height - in_pars.text.size.turn_order - in_pars.text.size.score_mode - in_pars.text.size.score_totals - 10;
+    y_upper_offset = in_pars.text.size.turn_order + in_pars.text.size.score_mode + 10;
+    % y_lower_offset = in_pars.text.size.score_totals;
+    shorter_dist = min([sqrt( (x/4)^2 + (y/4)^2 ), x/2, y/2]);
+    center_dist = min(x/2, y*tand(60)/2);
+    
+    radius = max(20, (shorter_dist/2)*(in_pars.target.radius_percent/100));
+    coords = [x/2,                 (y/4   + y_upper_offset); 
+              x/2 + center_dist/2, (y/2   + y_upper_offset); 
+              x/2,                 (3*y/4 + y_upper_offset); 
+              x/2 - center_dist/2, (y/2   + y_upper_offset)];
     rects = zeros(4,4);
     for idx = 1:4
-        rects(idx,:) = [coords(idx, 1)-r, coords(idx, 2)-r, coords(idx, 1)+r, coords(idx, 2)+r];
+        rects(idx,:) = [coords(idx, 1)-radius, coords(idx, 2)-radius, coords(idx, 1)+radius, coords(idx, 2)+radius];
     end
+    
+    ring_rects = rects+ [-10, -10, 10, 10];
+
     in_pars.target.button_names = button_names;
     in_pars.target.coords = coords;
     in_pars.target.rects = rects;
+    in_pars.target.radius = radius;
+    in_pars.target.ring_rects = ring_rects;
 
+    % CREATING in_pars.parameters.avatars
+    % Generating preliminary stuff
+        % avatar width = one 6th of screen width
+        % avatat height = one 4th of remaining screen height after score mode is shown     
+    avatar_width = in_pars.screen.window_width / 6;
+    avatar_height = (in_pars.screen.window_height - in_pars.text.size.score_totals - 10) / 4;
+    avatar_ystart = in_pars.text.size.score_mode + 10;
+    left_avatar_xstart = in_pars.screen.window_width - avatar_width;
+    avatar_name_ystart = avatar_height-(in_pars.text.size.title+10);
 
+    % Determine the dimensions for the player avatar
+    player_rect = [0, avatar_ystart, avatar_width, avatar_ystart + avatar_height];
+    player_textbox_rect = [0, avatar_ystart + avatar_name_ystart, avatar_width, avatar_ystart + avatar_height];
+    player_gray_rect = [0, avatar_ystart, avatar_width, avatar_ystart + avatar_name_ystart];
+    
+    % Determine the dimensions for the CPU
+    cpu_rect = [left_avatar_xstart, avatar_ystart, in_pars.screen.window_width, avatar_ystart + avatar_height];
+    cpu_textbox_rect = [left_avatar_xstart, avatar_ystart + avatar_name_ystart, in_pars.screen.window_width, avatar_ystart + avatar_height];
+    cpu_gray_rect = [left_avatar_xstart, avatar_ystart, in_pars.screen.window_width, avatar_ystart + avatar_name_ystart];
+
+    % storing the values in in_pars.avatars
+    in_pars.avatars.player_rect = player_rect;
+    in_pars.avatars.player_textbox_rect = player_textbox_rect;
+    in_pars.avatars.player_gray_rect = player_gray_rect;
+    in_pars.avatars.cpu_rect = cpu_rect;
+    in_pars.avatars.cpu_textbox_rect = cpu_textbox_rect;
+    in_pars.avatars.cpu_gray_rect = cpu_gray_rect;
+    in_pars.avatars.avatar_height = avatar_height;
+    in_pars.avatars.avatar_width = avatar_width;
+    in_pars.avatars.left_avatar_xstart = left_avatar_xstart;
 
     % in_pars.disbtn (disable buttons) - VALUE EVALUATION
     % Evaluating disbtn.player

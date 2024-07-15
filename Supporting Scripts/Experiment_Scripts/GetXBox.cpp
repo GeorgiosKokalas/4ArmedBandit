@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <Xinput.h>
 #include <iostream>
+#include <cstdlib>
 
 using namespace matlab::data;
 using matlab::mex::ArgumentList;
@@ -22,7 +23,7 @@ public:
                             "JoystickRThumb", "JoystickLThumb",
                             "LMovement", "RMovement",
                             "DPadUp","DPadDown","DPadLeft", "DPadRight",
-                            "RB", "RT", "LB", "LT", "Start", "AnyButton"};
+                            "RB", "RT", "LB", "LT", "Start", "AnyButton", "AnyInput"};
         StructArray structArray = factory.createStructArray({ 1, 1 }, fieldNames);
 
         // Read Xbox controller state
@@ -52,6 +53,8 @@ public:
         bool Start = is_connected ? (state.Gamepad.wButtons & XINPUT_GAMEPAD_START) != 0 : false;
         bool AnyButton = A || B || X || Y || JoystickRThumb || JoystickLThumb || DPadUp || DPadDown ||
                          DPadLeft || DPadRight || RB || LB || RT > 0.5 || LT > 0.5 || Start;
+        bool AnyInput = AnyButton || std::abs(JoystickLX) > 0.4 || std::abs(JoystickLY) > 0.4 || 
+                       std::abs(JoystickRX) > 0.4 || std::abs(JoystickRY) > 0.4; 
 
         // Assign the values we got into the structArray that we created
         structArray[0]["A"] = factory.createScalar<bool>(A);
@@ -76,6 +79,7 @@ public:
         structArray[0]["LT"] = factory.createScalar<double>(LT);
         structArray[0]["Start"] = factory.createScalar<bool>(Start);
         structArray[0]["AnyButton"] = factory.createScalar<bool>(AnyButton);
+        structArray[0]["AnyInput"] = factory.createScalar<bool>(AnyInput);
 
         // Assign the struct array to the output argument
         outputs[0] = std::move(structArray);

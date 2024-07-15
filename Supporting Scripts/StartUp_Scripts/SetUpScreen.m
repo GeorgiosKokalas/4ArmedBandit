@@ -1,9 +1,12 @@
 % Function called by: StartUp.m
 % Role of function is to initialize PsychToolBox and the Screen for the experiment  
-% Parameters: screen_pars (parameters for the screen)
-% Return Values: screen_pars (updated parameters for the screen)
+% Parameters: 
+%   - Screen_Pars (parameters for the screen)
+%   - Text_Font   (parameters for the text font)
+% Return Values: 
+%   - Screen_Pars (updated parameters for the screen)
 
-function screen_pars = SetUpScreen(screen_pars)
+function Screen_Pars = SetUpScreen(Screen_Pars, Text_Font)
     % Startup PsychToolBox 
     PsychDefaultSetup(2);
 
@@ -14,11 +17,10 @@ function screen_pars = SetUpScreen(screen_pars)
     Screen('Preference', 'SkipSyncTests', 2);           % Synchronization is nice, but not skipping the tests can randomly crash the program 
     
     % Create the window in which we will operate
-    [screen_pars.window, i ] = Screen('OpenWindow', screen_pars.screen, screen_pars.color, ...
-        [screen_pars.start_point, screen_pars.window_dims]);
+    [Screen_Pars.window, i ] = Screen('OpenWindow', Screen_Pars.screen, Screen_Pars.color, ...
+        [Screen_Pars.start_point, Screen_Pars.window_dims]);
 
     %Set up text Preferences
-    Screen('TextFont', screen_pars.window, screen_pars.default_text_font);
-    % Screen('TextSize', screen_pars.window, screen_pars.default_text_size);
+    Screen('TextFont', Screen_Pars.window, Text_Font.default);
 end
 
