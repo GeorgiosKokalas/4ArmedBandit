@@ -56,7 +56,19 @@ function Introduction(Pars)
         Pars.NewEvent(CreateEvent("intro2"))
     
         break_greater_loop = true;
+        first_loop = true;
         while true
+            start = GetSecs();
+            pl_ci = GetXBox();               % pl_ci = player controller input
+            % [~,  ~ , pl_ki] = KbCheck();     % pl_kc = player keyboard check  pl_ki = player keyboard input
+            % input_given = pl_ci.DPadAny || pl_ki(KbName('Space')) || any(abs([pl_ci.RMovement, pl_ci.LMovement]) > 0.5);
+            % disp([GetSecs()-start, input_given, first_loop]);
+            
+            % if first_loop; first_loop = false; end
+            % 
+            % if ~input_given && ~first_loop; continue; end
+
+        
             % Draw each image. Create a green border for the selected one
             for img_idx = 1:6
                 DrawIcon(Pars, ['PlAv', num2str(img_idx), '.png'], img_rects(img_idx, :));
@@ -67,12 +79,9 @@ function Introduction(Pars)
             DrawFormattedText(Pars.screen.window, controls_message, 'center', Pars.text.size.intro, color_list.white);
             Screen('Flip', Pars.screen.window);
 
-            % Wait for the XBox Controller signal
-            pl_i = GetXBox();
-
             % Prevent player from continuously giving input
-            contd_in_cond = ~pl_i.AnyButton && abs(pl_i.JoystickRX) < 0.5 && abs(pl_i.JoystickRY) < 0.5 &&...
-                abs(pl_i.JoystickLX) < 0.5 && abs(pl_i.JoystickLY) < 0.5;
+            contd_in_cond = ~pl_ci.AnyButton && abs(pl_ci.JoystickRX) < 0.5 && abs(pl_ci.JoystickRY) < 0.5 &&...
+                abs(pl_ci.JoystickLX) < 0.5 && abs(pl_ci.JoystickLY) < 0.5;
             if contd_in_cond; contd_in = false; end
             if contd_in; continue; end
 
@@ -81,14 +90,14 @@ function Introduction(Pars)
                 [new_img_y, new_img_x] = find(img_map == sel_img);
 
                 % Observe player movement from joysticks and DPad
-                down_cond = pl_i.DPadDown || (pl_i.JoystickRY > 0.5 && abs(pl_i.JoystickRX) < 0.5) ||...
-                    (pl_i.JoystickLY > 0.5 && abs(pl_i.JoystickLX) < 0.5);
-                up_cond = pl_i.DPadUp || (pl_i.JoystickRY < -0.5 && abs(pl_i.JoystickRX) < 0.5) ||...
-                    (pl_i.JoystickLY < -0.5 && abs(pl_i.JoystickLX) < 0.5);
-                right_cond = pl_i.DPadRight || (pl_i.JoystickRX > 0.5 && abs(pl_i.JoystickRY) < 0.5) ||...
-                    (pl_i.JoystickLX > 0.5 && abs(pl_i.JoystickLY) < 0.5);
-                left_cond = pl_i.DPadLeft || (pl_i.JoystickRX < -0.5 && abs(pl_i.JoystickRY) < 0.5) ||...
-                    (pl_i.JoystickLX < -0.5 && abs(pl_i.JoystickLY) < 0.5);
+                down_cond = pl_ci.DPadDown || (pl_ci.JoystickRY > 0.5 && abs(pl_ci.JoystickRX) < 0.5) ||...
+                    (pl_ci.JoystickLY > 0.5 && abs(pl_ci.JoystickLX) < 0.5);
+                up_cond = pl_ci.DPadUp || (pl_ci.JoystickRY < -0.5 && abs(pl_ci.JoystickRX) < 0.5) ||...
+                    (pl_ci.JoystickLY < -0.5 && abs(pl_ci.JoystickLX) < 0.5);
+                right_cond = pl_ci.DPadRight || (pl_ci.JoystickRX > 0.5 && abs(pl_ci.JoystickRY) < 0.5) ||...
+                    (pl_ci.JoystickLX > 0.5 && abs(pl_ci.JoystickLY) < 0.5);
+                left_cond = pl_ci.DPadLeft || (pl_ci.JoystickRX < -0.5 && abs(pl_ci.JoystickRY) < 0.5) ||...
+                    (pl_ci.JoystickLX < -0.5 && abs(pl_ci.JoystickLY) < 0.5);
                 % Move the player based on their input
                 if     down_cond;  new_img_y = new_img_y + 1;
                 elseif up_cond;    new_img_y = new_img_y - 1;
@@ -109,7 +118,7 @@ function Introduction(Pars)
             end
 
             % Check for selection buttons
-            if pl_i.A || pl_i.B || pl_i.X || pl_i.Y; break; end
+            if pl_ci.A || pl_ci.B || pl_ci.X || pl_ci.Y; break; end
         end
         Pars.avatars.player_avatar = sel_img;
 
@@ -126,16 +135,16 @@ function Introduction(Pars)
         while ~break_loop
             % If it is early enough draw the photodiode
 
-            pl_i = GetXBox();
+            pl_ci = GetXBox();
             for button_idx = 1:length(Pars.target.button_names)
                 color = Pars.target.colors(button_idx,:);
-                if pl_i.(Pars.target.button_names(button_idx))
+                if pl_ci.(Pars.target.button_names(button_idx))
                     color = color/0.8;
                 end
 
                 Screen('FillOval',Pars.screen.window, color, Pars.target.rects(button_idx,:));
                 
-                if pl_i.(Pars.target.button_names(button_idx))
+                if pl_ci.(Pars.target.button_names(button_idx))
                     Screen('FrameOval',Pars.screen.window, repmat(255,1,4), Pars.target.ring_rects(button_idx,:), 10);
                 end
 
@@ -150,12 +159,12 @@ function Introduction(Pars)
             Screen('Flip',Pars.screen.window);
             
             [key_pressed, ~, key_code] = KbCheck();
-            break_loop = key_pressed || (pl_i.AnyButton && ~pl_i.A && ~pl_i.B && ~pl_i.X && ~pl_i.Y);
-            if pl_i.JoystickRThumb || pl_i.JoystickLThumb || key_code(KbName('r')) == 1
+            break_loop = key_pressed || (pl_ci.AnyButton && ~pl_ci.A && ~pl_ci.B && ~pl_ci.X && ~pl_ci.Y);
+            if pl_ci.JoystickRThumb || pl_ci.JoystickLThumb || key_code(KbName('r')) == 1
                 break_greater_loop = false;
             end
-            % break_loop = KbCheck() || pl_i.RB || pl_i.LB || pl_i.RT > 0.5 || pl_i.LT > 0.5 || ...
-            %              pl_i.DPadDown || pl_i.DPadLeft || pl_i.DPadUp || pl_i.DPadRight || ...
+            % break_loop = KbCheck() || pl_ci.RB || pl_ci.LB || pl_ci.RT > 0.5 || pl_ci.LT > 0.5 || ...
+            %              pl_ci.DPadDown || pl_ci.DPadLeft || pl_ci.DPadUp || pl_ci.DPadRight || ...
             %              ;
         end
         WaitSecs(0.5);

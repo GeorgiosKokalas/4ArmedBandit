@@ -5,8 +5,8 @@
 % Output: 
 %   - time   When this happened
 function time = DrawPhotoDiode(Pars)
-    photodiode_rect = [0, Pars.screen.window_height*(8/9), ...
-                        Pars.screen.window_width/8, Pars.screen.window_height];
+    photodiode_rect = [0, Pars.screen.window_height*(7/8), ...
+                        Pars.screen.window_width/9, Pars.screen.window_height];
     Screen('FillRect', Pars.screen.window, repmat(255, 1, 4), photodiode_rect);
     time = GetSecs();
 end

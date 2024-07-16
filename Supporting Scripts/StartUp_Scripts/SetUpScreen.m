@@ -15,7 +15,7 @@ function SetUpScreen(Pars)
     Screen('Preference', 'SkipSyncTests', 2);           % Synchronization is nice, but not skipping the tests can randomly crash the program 
     
     % Create the window in which we will operate
-    [Pars.screen.window, i ] = Screen('OpenWindow', Pars.screen.screen, Pars.screen.color);
+    [Pars.screen.window, ~] = Screen('OpenWindow', Pars.screen.screen, Pars.screen.color);
 
     %Set up text Preferences
     Screen('TextFont', Pars.screen.window, Pars.text.font.default);

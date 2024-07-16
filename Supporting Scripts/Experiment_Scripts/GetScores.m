@@ -1,37 +1,59 @@
-% Function called by: Experiment.m
-% Role of function is to update the values of each button after every trial
-% Inputs: 
-%   - N_Arms     (The number of arms/buttons)
-%   - Change_Rng (Chance the points may change)
-%   - Initialize (Whether or not we need to initialize our variables
-% Outputs: 
-%   - Button_Scores (The scores of all buttons in a list)
-
 function [Button_Scores, change_log] = GetScores(N_Arms, Change_Rng, Initialize)
-    persistent means std_devs prs_change_log
+    persistent means new_means prs_change_log
 
     if ~exist("Initialize", "var"); Initialize = false; end
 
-    if Initialize || isempty(means) || isempty(std_devs) || isempty(prs_change_log)
-        % Initialize means and standard deviations for the arms
-        means = floor(20 + (80-20) * rand(1, N_Arms));   % Random means between 5 and 95 %std_devs = randi([1, 3], 1, N_Arms);
-        std_devs = randi([1, 15], 1, N_Arms);% Random std devs chosen from 1 to 15
-        prs_change_log = false(N_Arms,1); 
-    else
-        change_log_entry=false(N_Arms,1);
-        % Update the means of the arms based on the given probability
+    if Initialize || isempty(means) || isempty(prs_change_log)
+        % Initialize means ensuring they stay within [1, 100]
+        means = [randi([40, 70], 1, N_Arms - 1), randi([80, 100], 1, 1)];
+        
+        % Generate new means from normal distributions
+        new_means = zeros(1, N_Arms);
         for arm = 1:N_Arms
-            % 1 in 20 chance to change the mean of the arm
-            if rand() < Change_Rng/100
-                means(arm) = floor(20 + (80-20) * rand());
-                change_log_entry(arm)=true;
-                
+            if arm == N_Arms
+                new_means(arm) = floor(normrnd(means(arm), 7.5));
+                while new_means(arm) < 75 || new_means(arm) > 100
+                    new_means(arm) = floor(normrnd(means(arm), 7.5));
+                end
+            else
+                new_means(arm) = floor(normrnd(means(arm), 30));
+                while new_means(arm) < 1 || new_means(arm) > 100
+                    new_means(arm) = floor(normrnd(means(arm), 30));
+                end
             end
         end
-        prs_change_log=[prs_change_log,change_log_entry];
+
+        prs_change_log = false(N_Arms, 1); % Initialize change log as false
+    else
+        change_log_entry = false(N_Arms, 1);
+        % Update the means of the arms based on the given probability
+        for arm = 1:N_Arms
+            if rand() < Change_Rng / 100
+                % Redraw the means within specified ranges
+                means(arm) = floor(means(arm)); % Keep the current mean as a baseline
+                
+                if arm == N_Arms
+                    new_means(arm) = floor(normrnd(means(arm), 7.5));
+                    while new_means(arm) < 75 || new_means(arm) > 100
+                        new_means(arm) = floor(normrnd(means(arm), 7.5));
+                    end
+                else
+                    new_means(arm) = floor(normrnd(means(arm), 30));
+                    while new_means(arm) < 1 || new_means(arm) > 100
+                        new_means(arm) = floor(normrnd(means(arm), 30));
+                    end
+                end
+                
+                change_log_entry(arm) = true;
+            end
+        end
+        prs_change_log = [prs_change_log, change_log_entry];
     end
-    % Calculate points as the combination of the mean plus standard deviation
-    Button_Scores = means + std_devs .* (2 * randi([0, 1], 1, N_Arms) - 1);
-    change_log= prs_change_log;
-    % Button_Scores = max(min(Button_Scores, 100), 1);
+
+    % Set Button Scores
+    Button_Scores = new_means;
+    Button_Scores([3, 4]) = Button_Scores([4, 3]);
+
+    % Return the change log
+    change_log = prs_change_log;
 end

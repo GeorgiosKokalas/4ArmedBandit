@@ -11,6 +11,19 @@ using matlab::mex::ArgumentList;
 
 #pragma comment(lib, "Xinput.lib")
 
+/*  
+    Script created by Georgios Kokalas (last update July 2024)
+    Purpose: Receive and identify specific inputs from XBox controller
+    MEX file compiled with 'Microsoft Visual C++ 2022'
+    Works on OS: 
+        - Windows 10
+        - Windows 11
+    Compiled MEX File Works on MATLAB versions: 
+        - 2022b
+        - 2023a
+        - (likely to work on future versions, just haven't tested yet)
+*/
+
 class MexFunction : public matlab::mex::Function {
 public:
     void operator()(ArgumentList outputs, ArgumentList inputs) override {
@@ -22,7 +35,7 @@ public:
                             "JoystickRX", "JoystickRY", "JoystickLX", "JoystickLY",
                             "JoystickRThumb", "JoystickLThumb",
                             "LMovement", "RMovement",
-                            "DPadUp","DPadDown","DPadLeft", "DPadRight",
+                            "DPadUp","DPadDown","DPadLeft", "DPadRight", "DPadAny",
                             "RB", "RT", "LB", "LT", "Start", "AnyButton", "AnyInput"};
         StructArray structArray = factory.createStructArray({ 1, 1 }, fieldNames);
 
@@ -31,6 +44,7 @@ public:
         DWORD result = XInputGetState(0, &state);
         bool is_connected = (result == ERROR_SUCCESS);
 
+        // Detect any inputs
         // Create temporary values (ease of editing) to store our variables using ternary operators
         bool A = is_connected ? (state.Gamepad.wButtons & XINPUT_GAMEPAD_A) != 0 : false;
         bool B = is_connected ? (state.Gamepad.wButtons & XINPUT_GAMEPAD_B) != 0 : false;
@@ -46,6 +60,7 @@ public:
         bool DPadDown = is_connected  ? (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN)  != 0 : false;
         bool DPadLeft = is_connected  ? (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT)  != 0 : false;
         bool DPadRight = is_connected ? (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) != 0 : false;
+        bool DPadAny = DPadUp || DPadLeft || DPadRight || DPadDown;
         bool RB = is_connected ? (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) != 0 : false;
         double RT = is_connected ? double(state.Gamepad.bRightTrigger)/255 : 0;
         bool LB = is_connected ? (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) != 0 : false;
@@ -73,6 +88,7 @@ public:
         structArray[0]["DPadDown"] = factory.createScalar<bool>(DPadDown);
         structArray[0]["DPadLeft"] = factory.createScalar<bool>(DPadLeft);
         structArray[0]["DPadRight"] = factory.createScalar<bool>(DPadRight);
+        structArray[0]["DPadAny"] = factory.createScalar<bool>(DPadAny);
         structArray[0]["RB"] = factory.createScalar<bool>(RB);
         structArray[0]["RT"] = factory.createScalar<double>(RT);
         structArray[0]["LB"] = factory.createScalar<bool>(LB);
