@@ -5,7 +5,8 @@ function [Button_Scores, change_log] = GetScoresUpdate(N_Arms, Change_Rng, Initi
 
     if Initialize || isempty(means) || isempty(prs_change_log)
         % Initialize means ensuring they stay within [1, 100]
-        means = [randi([40, 70], 1, N_Arms - 1), randi([80, 100], 1, 1)];
+        %means = [randi([40, 70], 1, N_Arms - 1), randi([80, 100], 1, 1)];
+        means= [randi([15,85], 1, N_Arms - 1), randi([75, 100], 1, 1)];
         
         % Generate new means from normal distributions
         new_means = zeros(1, N_Arms);
