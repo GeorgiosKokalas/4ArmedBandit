@@ -3,11 +3,8 @@
 % The program allows the user to insert variables. This happens in 'InsertParams.m' 
 
 function main(Patient_Name)
-    % Start a parallel pool if it is not already started
-    if isempty(gcp('nocreate')); parpool; end
-
     % Call the task Start Event 
-    parfeval(backgroundPool,@CreateEvent, 1, "taskStart", GetSecs());
+    CreateEvent("taskStart");
     
     if ~exist("Patient_Name","var"); Patient_Name = 'TEST'; end
 
@@ -29,7 +26,7 @@ function main(Patient_Name)
     sca;  
     
     % Store the saves
-    parfeval(backgroundPool, @CreateEvent, 1, "taskEnd", GetSecs())
+    CreateEvent("taskEnd")
 
     pool = gcp('nocreate');
     if ~isempty(pool); delete(pool); end

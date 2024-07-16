@@ -17,7 +17,7 @@
 function [player_data, cpu_data, Totals, trial_events, abort] = RunTrial(Parameters, Disbtn, Button_Scores, Cpu, Totals, Block_Idx, Trial_Idx)
     %% PRE STAGE - Before the timer of the activity starts
     % Create a trial Start event
-    trev_hold = parfeval(backgroundPool, @CreateEvent, 1, "trialStart", Block_Idx, Trial_Idx);
+    trev_hold = parfeval(backgroundPool, @CreateEvent, 1, "trialStart", GetSecs(), Block_Idx, Trial_Idx);
 
     % Initialize some of the variables we need for storing
     pd_s = Parameters.trial.photodiode_dur_s;
@@ -74,7 +74,7 @@ function [player_data, cpu_data, Totals, trial_events, abort] = RunTrial(Paramet
         trial_events = [trial_events; cpu_events; pl_events];
     end
 
-    trev_hold = parfeval(backgroundPool, @CreateEvent, 1, "trialEnd", Block_Idx, Trial_Idx);
+    trev_hold = parfeval(backgroundPool, @CreateEvent, 1, "trialEnd", GetSecs(), Block_Idx, Trial_Idx);
     trial_events = [trial_events; fetchOutputs(trev_hold)];
 end
 
@@ -96,8 +96,7 @@ end
 %   - events        (A list of the events that happened during the player's turn)   
 function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Totals, Cpu, Block_Idx, Trial_Idx, PD_S)
     %% PRE CALCULATIONS FOR THE PLAYER TURN
-    ev_hold = {};
-    ev_hold{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "playerTurnStart", Block_Idx, Trial_Idx);
+    events = CreateEvent("playerTurnStart", Block_Idx, Trial_Idx);
 
     load("colors.mat", "color_list");
     disp("Player turn ")
@@ -115,7 +114,7 @@ function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Tot
         pc_input = GetXBox();
 
         % Draw the photodiode if this is the best time
-        if elapsed_time < PD_S; DrawPhotoDiode(Pars.screen); end
+        if elapsed_time < PD_S; DrawPhotoDiode(Pars); end
         
         % Draw the Pars.avatars and any extra stuff
         drawExtras(Pars, Cpu, Totals, Trial_Idx, false);
@@ -131,8 +130,9 @@ function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Tot
 
                 % If the button is eligible, act accordingly     
                 if ~strcmpi(Pars.target.button_names(button_idx), Disbtn)
-                    DrawPhotoDiode(Pars.screen); % Draw the photodiode for the event
-                    ev_hold{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "playerDecisionMade", Block_Idx, Trial_Idx);
+                    DrawPhotoDiode(Pars); % Draw the photodiode for the event
+                    events=[events; CreateEvent("playerDecisionMade", GetSecs(), Block_Idx, Trial_Idx))] parfeval(backgroundPool, @CreateEvent, 1, "playerDecisionMade", ...
+                                              GetSecs(), Block_Idx, Trial_Idx);
                     
                     % Store the choice, the score and update the totals.
                     choice = Pars.target.button_names(button_idx);
@@ -152,7 +152,7 @@ function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Tot
             end
             
             % Draw the Letters of the buttons
-            DrawIcon(Pars.screen.window, ['Letter_', Pars.target.button_names(button_idx), '.png'],...
+            DrawIcon(Pars, ['Letter_', Pars.target.button_names(button_idx), '.png'],...
                 Pars.target.rects(button_idx,:));
             
             % If the button is disabled, draw a semi-transparent circle over it to gray it out.     
@@ -190,7 +190,7 @@ function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Tot
                 'baseColor', color_list.white);
             Screen('FrameOval',Pars.screen.window, repmat(255,1,4), Pars.target.ring_rects(button_idx,:), 10);
         else
-            DrawIcon(Pars.screen.window, ['Letter_', Pars.target.button_names(button_idx), '.png'],...
+            DrawIcon(Pars, ['Letter_', Pars.target.button_names(button_idx), '.png'],...
                 Pars.target.rects(button_idx,:));
         end
 
@@ -204,11 +204,15 @@ function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Tot
     % Get the data for the player to be returned
     pl_data = struct('time',elapsed_time, 'score', score, 'choice', choice);
     WaitSecs(1);
-    ev_hold{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "playerTurnEnd", Block_Idx, Trial_Idx);
+    ev_hold{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "playerTurnEnd", GetSecs(), Block_Idx, Trial_Idx);
 
     for ev_idx = 1:length(ev_hold)
-        events 
+        while ~strcmpi(ev_hold{ev_idx}.State, 'finished'); disp(ev_hold{ev_idx}.State); end
+        events = [events; fetchOutputs(ev_hold{ev_idx})];
+    end
 end
+
+% function [ffset, Ev_Hold]
 
 % cpuTurn - Function for the turn of the cpu
 % Arguments:
@@ -226,12 +230,15 @@ end
 %   - events        (A list of the events that happened during the player's turn)   
 function [cpu_data, Totals, events] = cpuTurn(Pars, Disbtn, Button_Scores, Cpu, Totals, Block_Idx, Trial_Idx, PD_S)
     %% PRE-CALCULATIONS FOR CPU TURN
+    [events, ev_hold] = deal({});
+    ev_hold{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "cpuTurnStart", GetSecs(), Block_Idx, Trial_Idx);
+
     % Determine how long the cpu will wait to emulate decision making
     cpu_time = rand()* Pars.trial.cpu_wait_dur + Pars.trial.cpu_wait_s(1);
     
     % Note the event of the cpu beginning its turn
-    disp("Cpu - prechoice")
-    events = {sprintf('Block %d Trial %d - CPU Turn Start', Block_Idx, Trial_Idx), GetSecs()};
+    % disp("Cpu - prechoice")
+    % events = {sprintf('Block %d Trial %d - CPU Turn Start', Block_Idx, Trial_Idx), GetSecs()};
     
     %% CPU PRECHOICE ILLUSTRATIONS
     % PHOTODIODE MODE
@@ -260,11 +267,12 @@ function [cpu_data, Totals, events] = cpuTurn(Pars, Disbtn, Button_Scores, Cpu, 
     
     % Wait until the cpu's wait time has finished
     WaitSecs(max(0, cpu_time - PD_S - (GetSecs() - npd_mode_start)));
+    ev_hold{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "cpuDecisionMade", GetSecs(), Block_Idx, Trial_Idx);
     
     %% CPU POSTCHOICE ILLUSTRATIONS
     % Make a note of the cpu's choice as an event
     disp("Cpu - postchoice")
-    events = [events;{sprintf('Block %d Trial %d - CPU Turn Choice', Block_Idx, Trial_Idx), GetSecs()};];
+    % events = [events;{sprintf('Block %d Trial %d - CPU Turn Choice', Block_Idx, Trial_Idx), GetSecs()};];
 
     % PHOTODIODE MODE
     pd_mode_start = GetSecs();
@@ -284,6 +292,12 @@ function [cpu_data, Totals, events] = cpuTurn(Pars, Disbtn, Button_Scores, Cpu, 
     
     % save the data of the turn
     cpu_data = struct('score', cpu_score, 'choice', cpu_choice);
+    ev_hold{end+1} = parfeval(backgroundPool, @CreateEvent, 1, "cpuTurnEnd", GetSecs(), Block_Idx, Trial_Idx);
+
+    for ev_idx = 1:length(ev_hold)
+        while ~strcmpi(ev_hold{ev_idx}.State, 'finished'); disp(ev_hold{ev_idx}.State); end
+        events = [events; fetchOutputs(ev_hold{ev_idx})];
+    end
 end
 
 % cpuDrawPart1 - Drawing before the cpu makes a choice
@@ -300,7 +314,7 @@ function cpuDrawPart1(Pars, Disbtn, Show_PhotoDiode)
         
         % Draw the button and its letter
         Screen('FillOval',Pars.screen.window, color, Pars.target.rects(button_idx,:));
-        DrawIcon(Pars.screen.window, ['Letter_', Pars.target.button_names(button_idx), '.png'],...
+        DrawIcon(Pars, ['Letter_', Pars.target.button_names(button_idx), '.png'],...
                  Pars.target.rects(button_idx,:));
         
         % Obscure the disabled button
@@ -310,7 +324,7 @@ function cpuDrawPart1(Pars, Disbtn, Show_PhotoDiode)
     end
     
     % If the photodiode is to be shown, do it
-    if Show_PhotoDiode; DrawPhotoDiode(Pars.screen); end
+    if Show_PhotoDiode; DrawPhotoDiode(Pars); end
     
     % Put everything on screen
     Screen('Flip', Pars.screen.window);
@@ -350,7 +364,7 @@ function cpuDrawPart2(Pars, Disbtn, Cpu_Choice, Cpu_Score, Show_PhotoDiode)
                                'sy', Pars.target.coords(button_idx, 2), 'xalign', 'center', 'yalign','center',...
                                'baseColor', [0,0,0,255]);
         else
-            DrawIcon(Pars.screen.window, ['Letter_', Pars.target.button_names(button_idx), '.png'],...
+            DrawIcon(Pars, ['Letter_', Pars.target.button_names(button_idx), '.png'],...
                      Pars.target.rects(button_idx,:));
         end
         
@@ -361,7 +375,7 @@ function cpuDrawPart2(Pars, Disbtn, Cpu_Choice, Cpu_Score, Show_PhotoDiode)
     end
 
     % If the photodiode is to be drawn, do it
-    if Show_PhotoDiode; DrawPhotoDiode(Pars.screen); end
+    if Show_PhotoDiode; DrawPhotoDiode(Pars); end
     
     % Present everything
     Screen('Flip', Pars.screen.window);
@@ -395,8 +409,8 @@ function drawExtras(Pars, Cpu, Totals, Trial_Idx, Hide_Player)
                        'sy', Pars.text.size.score_mode + 15, 'xalign', 'right', 'baseColor', white); 
     
     % Draw out the Pars.avatars
-    DrawIcon(Pars.screen.window, ['PlAv', num2str(Pars.avatars.player), '.png'], Pars.avatars.player_rect);
-    DrawIcon(Pars.screen.window, ['CpuAv', num2str(Cpu.Behavior_Mode), '.png'], Pars.avatars.cpu_rect);
+    DrawIcon(Pars, ['PlAv', num2str(Pars.avatars.player), '.png'], Pars.avatars.player_rect);
+    DrawIcon(Pars, ['CpuAv', num2str(Cpu.Behavior_Mode), '.png'], Pars.avatars.cpu_rect);
 
     % See which entity to hide
     if Hide_Player
