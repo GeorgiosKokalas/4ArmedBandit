@@ -8,7 +8,7 @@ function Experiment(Parameters)
     % Create the list of all the cpus
     cpu_list = [CpuPlayer(2, "Indifferent", "Sam"), CpuPlayer(3, "Cooperative", "Tony"), CpuPlayer(5, "Competitive", "Kendal"),...
                 CpuPlayer(2, "Indifferent", "Sam"), CpuPlayer(3, "Cooperative", "Tony"), CpuPlayer(5, "Competitive", "Kendal")];
-    % cpu_list =  [CpuPlayer(5, "reductive")];
+    % cpu_list =  [CpuPlayer(5, "Indifferent", "Vic")];
     Parameters.avatars.player = 1;
     abort = false;
 
@@ -216,7 +216,7 @@ function blockSwitch(Pars, Block_Idx, Num_Blocks, Cpu, Totals)
 
     % If this is the final block, exit the function
     if Block_Idx ~= Num_Blocks
-        text = sprintf('%s\nBlock %d Complete! %d more to go!\n', text, Block_Idx, Num_Blocks-Block_Idx);
+        text = sprintf('%s\nBlock %d Complete! %d more to go!', text, Block_Idx, Num_Blocks-Block_Idx);
         text = sprintf('%s\nPress any button to continue.', text);
     end
     

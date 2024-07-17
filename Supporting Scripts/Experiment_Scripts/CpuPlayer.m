@@ -41,7 +41,7 @@ classdef CpuPlayer < handle
                     end 
                 end
             end
-            if ~is_valid_mode; score_mode = "indifferent"; end
+            if ~is_valid_mode; score_mode = "Indifferent"; end
             
             % Check for the choice list
             if ~exist("choice_list", "var") || isempty(choice_list)
