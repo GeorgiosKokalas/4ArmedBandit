@@ -47,16 +47,16 @@ function [Button_Scores, change_log,f_means] = GetScores(Arms, Change_Rng, Stati
         valid_point = false; % Flag to check if the point is valid
         while ~valid_point
             if arm <= n_arms - 2
-                new_points(arm) = floor(normrnd(so_means(arm), 7));
+                new_points(arm) = floor(normrnd(means(arm), 15));
             elseif arm == n_arms - 1
-                mu_right = log((so_means(end - 1)^2) / sqrt(15^2 + (so_means(end - 1)^2)));
-                sd_right = sqrt(log((15^2) / (so_means(end - 1)^2) + 1));
+                mu_right = log((means(end - 1)^2) / sqrt(15^2 + (means(end - 1)^2)));
+                sd_right = sqrt(log((15^2) / (means(end - 1)^2) + 1));
                 new_points(arm) = floor(lognrnd(mu_right, sd_right));
             else
-                mu_left = log((so_means(end)^2) / sqrt(15^2 + (so_means(end)^2)));
-                sd_left = sqrt(log((15^2) / (so_means(end)^2) + 1));
+                mu_left = log((means(end)^2) / sqrt(15^2 + (means(end)^2)));
+                sd_left = sqrt(log((15^2) / (means(end)^2) + 1));
                 lognormal_sample = floor(lognrnd(mu_left, sd_left));
-                central_value = 2 * so_means(end);
+                central_value = 2 * means(end);
                 new_points(arm) = central_value - lognormal_sample;
             end
 
