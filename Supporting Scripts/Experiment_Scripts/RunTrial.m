@@ -12,9 +12,10 @@
 %   - player_data   (Data on the player's performance)
 %   - cpu_data      (Data on the cpu's performance)
 %   - Totals        (The updated Totals initially provided)
-%   - trial_events  (The events that occured during this trial and their time 
+%   - trial_events  (The events that occured during this trial and their time)   
+%   - extras        (struct to store extra things)
 
-function [player_data, cpu_data, Totals, trial_events, abort] = RunTrial(Parameters, Disbtn, Button_Scores, Cpu, Totals, Block_Idx, Trial_Idx)
+function [player_data, cpu_data, Totals, trial_events, extras] = RunTrial(Parameters, Disbtn, Button_Scores, Cpu, Totals, Block_Idx, Trial_Idx)
     %% PRE STAGE - Before the timer of the activity starts
     % Create a trial Start event
     trial_events = CreateEvent("trialStart", Block_Idx, Trial_Idx);
@@ -24,6 +25,9 @@ function [player_data, cpu_data, Totals, trial_events, abort] = RunTrial(Paramet
     cpu_data = struct('score', NaN, 'choice', NaN);
     pd_s = Parameters.trial.photodiode_dur_s;
     abort = false;
+    archived_button_scores = [];
+    archived_score_means = [];
+    block_change_logs = NaN;
     
 
 
@@ -64,6 +68,14 @@ function [player_data, cpu_data, Totals, trial_events, abort] = RunTrial(Paramet
         [player_data, Totals, pl_events, abort] = playerTurn(Parameters, Disbtn.player, Button_Scores, Totals, ...
                                                       Cpu, Block_Idx, Trial_Idx, pd_s);
         if ~abort
+            % Update the scores because I suddenly need to mid trial 
+            [Button_Scores, block_change_logs, score_means] = GetScores(Parameters.target.button_names, ...  % The scores for each button
+                                                                        Parameters.target.score_change_rng,...
+                                                                        Disbtn.player, false);
+            archived_score_means = score_means;
+            archived_button_scores = Button_Scores;
+           
+            % Carry out the Cpu's turn
             [cpu_data, Totals, cpu_events] = cpuTurn(Parameters, Disbtn.cpu, Button_Scores, Cpu, Totals,...
                                                      Block_Idx, Trial_Idx, pd_s);
         end
@@ -71,12 +83,30 @@ function [player_data, cpu_data, Totals, trial_events, abort] = RunTrial(Paramet
     else
         [cpu_data, Totals, cpu_events] = cpuTurn(Parameters, Disbtn.cpu, Button_Scores, Cpu, Totals,...
                                                  Block_Idx, Trial_Idx, pd_s);
+        % Update the scores because I suddenly need to mid trial 
+        [Button_Scores, block_change_logs, score_means] = GetScores(Parameters.target.button_names, ...  % The scores for each button
+                                                                    Parameters.target.score_change_rng, ...
+                                                                    Disbtn.player, false);
+        archived_score_means = score_means;
+        archived_button_scores = Button_Scores;
+        
+        % Carry out the player's turn
         [player_data, Totals, pl_events, abort] = playerTurn(Parameters, Disbtn.player, Button_Scores, Totals, ...
                                                       Cpu, Block_Idx, Trial_Idx, pd_s);
         trial_events = [trial_events; cpu_events; pl_events];
     end
 
+    if Trial_Idx ~= Parameters.trial.num && ~abort
+        [Button_Scores, block_change_logs, score_means] = GetScores(Parameters.target.button_names, ...  % The scores for each button
+                                                                    Parameters.target.score_change_rng, ...
+                                                                    Disbtn.player, false);
+        archived_score_means = [archived_score_means; score_means];
+        archived_button_scores = [archived_button_scores; Button_Scores];
+    end
+
     trial_events = [trial_events; CreateEvent("trialEnd", Block_Idx, Trial_Idx)];
+    extras = struct("abort", abort, 'button_scores', Button_Scores, 'archived_sm', archived_score_means, ...
+                    "archived_bs", archived_button_scores, "block_cl", block_change_logs);
 end
 
 
@@ -266,8 +296,8 @@ function Pause_Offset = pauseGame(Pars, Pause_Offset)
     WaitSecs(0.3);
     
     % Let the player know the game is paused
-    Screen('TextSize', Pars.screen.window, Pars.text.size.score_totals);
-    msg = 'Game is paused. \n Press Start on the controller, or P on the keyboard to unpause.';
+    Screen('TextSize', Pars.screen.window, Pars.text.size.scores);
+    msg = 'Game is paused.\nPress Start on the controller, or P on the keyboard to unpause.';
     DrawFormattedText2(msg, 'win', Pars.screen.window, 'sx', 'center', 'sy', 'center', ...
                        'xalign', 'center', 'baseColor', repmat(255, 1, 4));
     Screen('Flip', Pars.screen.window);

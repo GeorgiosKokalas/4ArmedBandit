@@ -120,7 +120,7 @@ function Introduction(Pars)
             % Check for selection buttons
             if pl_ci.A || pl_ci.B || pl_ci.X || pl_ci.Y; break; end
         end
-        Pars.avatars.player_avatar = sel_img;
+        Pars.avatars.player = sel_img;
 
         %% BUTTON SCHEME FAMILIARIZATION
         % Store the character selection event
