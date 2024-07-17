@@ -47,7 +47,7 @@ function [Button_Scores, change_log,f_means] = GetScoresUpdateB(Arms, Change_Rng
         valid_point = false; % Flag to check if the point is valid
         while ~valid_point
             if arm <= n_arms - 2
-                new_points(arm) = floor(normrnd(so_means(arm), 7));
+                new_points(arm) = floor(normrnd(so_means(arm), 15));
             elseif arm == n_arms - 1
                 mu_right = log((so_means(end - 1)^2) / sqrt(15^2 + (so_means(end - 1)^2)));
                 sd_right = sqrt(log((15^2) / (so_means(end - 1)^2) + 1));
