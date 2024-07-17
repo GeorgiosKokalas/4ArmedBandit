@@ -29,6 +29,7 @@ function [player_data, cpu_data, Totals, trial_events, extras] = RunTrial(Parame
     archived_score_means = [];
     block_change_logs = NaN;
     
+    [pl_events, cpu_events] = deal([]);
 
 
     %% PRESENTATION STAGE - The trial begins    
@@ -307,7 +308,7 @@ function Pause_Offset = pauseGame(Pars, Pause_Offset)
         pl_ci = GetXBox();
         [~, ~, ex_ki] = KbCheck();
         
-        if pl_ci.Start || ex_ki(KbName('ESCAPE')); break; end
+        if pl_ci.Start || ex_ki(KbName('P')); break; end
     end
     WaitSecs(0.3);
 
