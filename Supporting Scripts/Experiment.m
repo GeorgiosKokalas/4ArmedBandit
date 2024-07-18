@@ -42,6 +42,7 @@ function Experiment(Parameters)
                                          'VariableNames',combos_str));
     all_button_scores = struct;
     all_score_means = struct;
+    %all_distances=struct;
     score_change_logs = struct;
     exp_events = {};
     
@@ -83,6 +84,7 @@ function Experiment(Parameters)
                                                                     disbtn.player, true);
         all_button_scores.(block_str_name) = button_scores;
         all_score_means.(block_str_name) = score_means;
+        %all_distances.(block_str_name) = mhb_dist;
         
         % Generate the message for the start of the block to the player
         blockStart(Parameters ,block_idx, num_blocks, cpu_list(cpu_idx).Name);  
