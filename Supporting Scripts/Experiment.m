@@ -10,6 +10,7 @@ function Experiment(Parameters)
     cpu_list = [CpuPlayer(2, "Indifferent", "Sam"), CpuPlayer(4, "Cooperative", "Tony"), CpuPlayer(5, "Competitive", "Kendal"),...
                 CpuPlayer(2, "Indifferent", "Sam"), CpuPlayer(4, "Cooperative", "Tony"), CpuPlayer(5, "Competitive", "Kendal")];
     % cpu_list =  [CpuPlayer(5, "Competitive", "Kendal")];
+
     Parameters.avatars.player = 1;
     abort = false;
 

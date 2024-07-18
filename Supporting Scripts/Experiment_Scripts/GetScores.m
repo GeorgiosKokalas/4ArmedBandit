@@ -77,7 +77,7 @@ function [Button_Scores, change_log,f_means,mhn_dist] = GetScores(Arms, Change_R
             mhn_dist(i, j) = sqrt(diff' * inv(cov_matrix) * diff);
         end
     end
-    mhn_dist = reshape(mhn_dist.',1,[])
+    mhn_dist = reshape(mhn_dist.',1,[]);
 
     Button_Scores = new_points;
 
@@ -90,7 +90,7 @@ function [so_means, ra_means, means_ra_idx] = generateMeans(Arms, Static_Arm)
     static_arm_idx = find(Arms == Static_Arm);
     n_arms = length(Arms);
     % Initialize means ensuring they stay within [1, 100]
-    means = [randi([1, 100], 1, n_arms - 1), randi([75,100], 1, 1)];
+    means = [randi([1, 100], 1, n_arms - 1), randi([75,90], 1, 1)];
 
     % Sort means to identify the highest ones
     so_means = sort(means, 'ascend');
