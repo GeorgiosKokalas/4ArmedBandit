@@ -188,7 +188,7 @@ classdef CpuPlayer < handle
             [~, sorted_indices] = sort(Button_Scores, 'descend');
 
             % Probability threshold
-            top_scores_prob = 0.60;
+            top_scores_prob = 0.55;
             
             % Determine the next choice based on the defined probabilities
             if rand() < top_scores_prob

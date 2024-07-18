@@ -118,7 +118,7 @@ function Introduction(Pars)
             end
 
             % Check for selection buttons
-            if pl_ci.A || pl_ci.B || pl_ci.X || pl_ci.Y; break; end
+            if pl_ci.A || pl_ci.B || pl_ci.X || pl_ci.Y || KbCheck(); break; end
         end
         Pars.avatars.player = sel_img;
 

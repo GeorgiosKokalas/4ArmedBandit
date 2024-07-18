@@ -26,7 +26,7 @@ function main(Patient_Name)
     sca;  
     
     % Store the saves
-    CreateEvent("taskEnd")
+    CreateEvent("taskStop")
 
     pool = gcp('nocreate');
     if ~isempty(pool); delete(pool); end

@@ -42,7 +42,7 @@ function event_cell = CreateEvent(Type, Block_Idx, Trial_Idx, Cpu)
             event_msg = sprintf("Block %d, Trial %d: CPU Turn Ended", Block_Idx, Trial_Idx);
         otherwise
             event_cell = {"Error", GetSecs()};
-            disp("Event Call not recognized. Aborting...")
+            fprintf("Event Call %s not recognized. Aborting...", Type)
             return;
     end
     event_msg = char(event_msg);

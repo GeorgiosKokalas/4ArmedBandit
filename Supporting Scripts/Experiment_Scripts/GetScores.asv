@@ -77,8 +77,8 @@ function [Button_Scores, change_log,f_means,mhn_dist] = GetScores(Arms, Change_R
             mhn_dist(i, j) = sqrt(diff' * inv(cov_matrix) * diff);
         end
     end
-    mhn_dist = reshape(mhn_dist.',1,[])
-
+    mhn_dist
+    
     Button_Scores = new_points;
 
     f_means=means;

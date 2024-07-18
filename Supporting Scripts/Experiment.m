@@ -7,9 +7,9 @@ function Experiment(Parameters)
     %% Do some precalculations
     % Create the list of all the cpus
     %might need to change to 2,4,5
-    cpu_list = [CpuPlayer(2, "Indifferent", "Sam"), CpuPlayer(3, "Cooperative", "Tony"), CpuPlayer(5, "Competitive", "Kendal"),...
-                CpuPlayer(2, "Indifferent", "Sam"), CpuPlayer(3, "Cooperative", "Tony"), CpuPlayer(5, "Competitive", "Kendal")];
-    % cpu_list =  [CpuPlayer(5, "Indifferent", "Vic")];
+    % cpu_list = [CpuPlayer(2, "Indifferent", "Sam"), CpuPlayer(4, "Cooperative", "Tony"), CpuPlayer(5, "Competitive", "Kendal"),...
+    %             CpuPlayer(2, "Indifferent", "Sam"), CpuPlayer(4, "Cooperative", "Tony"), CpuPlayer(5, "Competitive", "Kendal")];
+    cpu_list =  [CpuPlayer(5, "Competitive", "Kendal")];
     Parameters.avatars.player = 1;
     abort = false;
 
@@ -41,9 +41,7 @@ function Experiment(Parameters)
                                          'VariableTypes', repmat("double", 1, num_blocks), ...
                                          'VariableNames',combos_str));
     all_button_scores = struct;
-    all_score_means = struct;
-    %all_distances=struct;
-    score_change_logs = struct;
+    [all_score_means, all_distances, score_change_logs] = deal(struct);
     exp_events = {};
     
     % Randomize the blocks
@@ -79,12 +77,12 @@ function Experiment(Parameters)
         cpu_idx = str2double(combos(block_idx,1));          % the index of the cpu that we will be using
         disbtn = struct('player', Parameters.disbtn.player(str2double(combos(block_idx,2))), ...  % The disabled buttons for the player and cpu in the block
                         'cpu', Parameters.disbtn.cpu(str2double(combos(block_idx,3))));
-        [button_scores, block_change_logs, score_means] = GetScores(Parameters.target.button_names, ...  % The scores for each button
-                                                                    Parameters.target.score_change_rng,...
-                                                                    disbtn.player, true);
+        [button_scores, block_change_logs, score_means, mhb_dist] = GetScores(Parameters.target.button_names, ...  % The scores for each button
+                                                                      Parameters.target.score_change_rng,...
+                                                                      disbtn.player, true);
         all_button_scores.(block_str_name) = button_scores;
         all_score_means.(block_str_name) = score_means;
-        %all_distances.(block_str_name) = mhb_dist;
+        all_distances.(block_str_name) = mhb_dist;
         
         % Generate the message for the start of the block to the player
         blockStart(Parameters ,block_idx, num_blocks, cpu_list(cpu_idx).Name);  
@@ -100,9 +98,10 @@ function Experiment(Parameters)
                                                                       block_idx, trial_idx);
              abort = extras.abort;
              button_scores = extras.button_scores;
-             
-             all_button_scores.(block_str_name) = [all_button_scores.(block_str_name) ; extras.archived_bs];
+
+              all_button_scores.(block_str_name) = [all_button_scores.(block_str_name) ; extras.archived_bs];
              all_score_means.(block_str_name)   = [all_score_means.(block_str_name)   ; extras.archived_sm];
+             all_distances.(block_str_name)     = [all_distances.(block_str_name)     ; extras.archived_mhb];
              
              if ~isnan(extras.block_cl); block_change_logs = extras.block_cl; end
 
@@ -142,11 +141,12 @@ function Experiment(Parameters)
         block_button_scores = all_button_scores.(block_str_name);
         block_score_means   = all_score_means.(block_str_name);
         exp_events          = Parameters.exp_events;
+        block_mhb_distances = all_distances.(block_str_name);
 
         % Save the block results
         save(block_filename, "block_pl_choices", "block_pl_scores", "block_pl_times", "block_change_logs",...
             "block_cpu_scores", "block_cpu_choices", "block_total", "block_events", "block_score_means",...
-            "block_button_scores", "-mat");
+            "block_button_scores", "block_mhb_distances", "-mat");
 
         score_change_logs.(block_str_name) = block_change_logs;
     end
@@ -154,7 +154,7 @@ function Experiment(Parameters)
     % Save the experiment results
     save("All_Blocks.mat", "pl_choices", "pl_scores", "pl_times", "cpu_scores", "score_change_logs", ...
          "cpu_choices", "pl_totals", "cpu_totals", "exp_events", "combo_logs", "all_score_means",...
-         "all_button_scores", "-mat");
+         "all_button_scores", "all_distances", "-mat");
 
     % Cleanup the handles
     for idx = length(cpu_list):-1:1

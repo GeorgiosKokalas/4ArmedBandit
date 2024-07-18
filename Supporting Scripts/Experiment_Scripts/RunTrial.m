@@ -27,6 +27,7 @@ function [player_data, cpu_data, Totals, trial_events, extras] = RunTrial(Parame
     abort = false;
     archived_button_scores = [];
     archived_score_means = [];
+    archived_mhb_dist = [];
     block_change_logs = NaN;
     
     [pl_events, cpu_events] = deal([]);
@@ -67,33 +68,35 @@ function [player_data, cpu_data, Totals, trial_events, extras] = RunTrial(Parame
     disp("NEW TRIAL")
     if rotation_result > 180
         [player_data, Totals, pl_events, abort] = playerTurn(Parameters, Disbtn.player, Button_Scores, Totals, ...
-                                                      Cpu, Block_Idx, Trial_Idx, pd_s);
+                                                      Cpu, Block_Idx, 2*Trial_Idx-1, pd_s);
         if ~abort
             % Update the scores because I suddenly need to mid trial 
-            [Button_Scores, block_change_logs, score_means] = GetScores(Parameters.target.button_names, ...  % The scores for each button
-                                                                        Parameters.target.score_change_rng,...
-                                                                        Disbtn.player, false);
+            [Button_Scores, block_change_logs, score_means, mhb_dist] = GetScores(Parameters.target.button_names, ...  % The scores for each button
+                                                                          Parameters.target.score_change_rng,...
+                                                                          Disbtn.player, false);
             archived_score_means = score_means;
             archived_button_scores = Button_Scores;
+            archived_mhb_dist = mhb_dist;
            
             % Carry out the Cpu's turn
             [cpu_data, Totals, cpu_events] = cpuTurn(Parameters, Disbtn.cpu, Button_Scores, Cpu, Totals,...
-                                                     Block_Idx, Trial_Idx, pd_s);
+                                                     Block_Idx, 2*Trial_Idx, pd_s);
         end
         trial_events = [trial_events; pl_events; cpu_events];
     else
         [cpu_data, Totals, cpu_events] = cpuTurn(Parameters, Disbtn.cpu, Button_Scores, Cpu, Totals,...
-                                                 Block_Idx, Trial_Idx, pd_s);
+                                                 Block_Idx, 2*Trial_Idx-1, pd_s);
         % Update the scores because I suddenly need to mid trial 
-        [Button_Scores, block_change_logs, score_means] = GetScores(Parameters.target.button_names, ...  % The scores for each button
-                                                                    Parameters.target.score_change_rng, ...
-                                                                    Disbtn.player, false);
+        [Button_Scores, block_change_logs, score_means, mhb_dist] = GetScores(Parameters.target.button_names, ...  % The scores for each button
+                                                                      Parameters.target.score_change_rng, ...
+                                                                      Disbtn.player, false);
         archived_score_means = score_means;
         archived_button_scores = Button_Scores;
+        archived_mhb_dist = mhb_dist;
         
         % Carry out the player's turn
         [player_data, Totals, pl_events, abort] = playerTurn(Parameters, Disbtn.player, Button_Scores, Totals, ...
-                                                      Cpu, Block_Idx, Trial_Idx, pd_s);
+                                                      Cpu, Block_Idx, 2*Trial_Idx, pd_s);
         trial_events = [trial_events; cpu_events; pl_events];
     end
 
@@ -103,11 +106,13 @@ function [player_data, cpu_data, Totals, trial_events, extras] = RunTrial(Parame
                                                                     Disbtn.player, false);
         archived_score_means = [archived_score_means; score_means];
         archived_button_scores = [archived_button_scores; Button_Scores];
+        archived_mhb_dist = [archived_mhb_dist; mhb_dist];
     end
 
     trial_events = [trial_events; CreateEvent("trialEnd", Block_Idx, Trial_Idx)];
     extras = struct("abort", abort, 'button_scores', Button_Scores, 'archived_sm', archived_score_means, ...
-                    "archived_bs", archived_button_scores, "block_cl", block_change_logs);
+                    "archived_bs", archived_button_scores, "block_cl", block_change_logs, ...
+                    "archived_mhb", archived_mhb_dist);
 end
 
 
@@ -154,6 +159,9 @@ function [pl_data, Totals, events, abort] = playerTurn(Pars, Disbtn, Button_Scor
 
     %% LOOP PHASE - player will be making their choice
     while ~break_loop
+        % Get the time
+        elapsed_time = GetSecs()-pause_offset-start;
+
         % Get the player's input
         pl_ci = GetXBox();          % pl_ci = player controller input
         [~,~,ex_ki] = KbCheck();    % ex_ki = experimenter keyboard input
@@ -166,6 +174,7 @@ function [pl_data, Totals, events, abort] = playerTurn(Pars, Disbtn, Button_Scor
         if elapsed_time < PD_S
             if first_loop_pd
                 first_loop_pd = false;
+                disp('a')
             else
                 if ~keep_drawing; continue; end
             end
@@ -173,6 +182,7 @@ function [pl_data, Totals, events, abort] = playerTurn(Pars, Disbtn, Button_Scor
         else
             if first_loop_npd
                 first_loop_npd = false;
+                disp('b')
             else
                 if ~keep_drawing; continue; end
             end
@@ -311,9 +321,11 @@ function Pause_Offset = pauseGame(Pars, Pause_Offset)
         if pl_ci.Start || ex_ki(KbName('P')); break; end
     end
     WaitSecs(0.3);
+    disp(Pause_Offset);
 
     % Note the time passed
     Pause_Offset = Pause_Offset + (GetSecs() - offset_start);
+    disp(Pause_Offset);
 end
 
 
