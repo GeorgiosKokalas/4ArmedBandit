@@ -8,7 +8,7 @@ function event_cell = CreateEvent(Type, Block_Idx, Trial_Idx, Cpu)
             event_msg = "Task Start";
         case "taskStop"
             event_msg = "Task Ended Successfully";
-        case "taskPaused"
+        case "taskPause"
             event_msg = sprintf("Block %d, Trial %d: Task Paused", Block_Idx, Trial_Idx);
         case "taskResume"
             event_msg = sprintf("Block %d, Trial %d: Task Resumed", Block_Idx, Trial_Idx);
@@ -42,7 +42,7 @@ function event_cell = CreateEvent(Type, Block_Idx, Trial_Idx, Cpu)
             event_msg = sprintf("Block %d, Trial %d: CPU Turn Ended", Block_Idx, Trial_Idx);
         otherwise
             event_cell = {"Error", GetSecs()};
-            disp("Event Call not recognized. Aborting...")
+            fprintf("Event Call %s not recognized. Aborting...", Type)
             return;
     end
     event_msg = char(event_msg);
@@ -52,7 +52,7 @@ function event_cell = CreateEvent(Type, Block_Idx, Trial_Idx, Cpu)
         event_cell = {event_msg, GetSecs()};
     catch ME
         disp("Event cell failed to create")
-        event_cell = {ME.message, GetSecs()+40000000000};
+        event_cell = {ME.message, 0};
     end
 
     % Try to send a BlackRock comment twice for good measure

@@ -1,12 +1,11 @@
-function [Button_Scores, change_log] = GetScoresUpdate(N_Arms, Change_Rng, Initialize)
+function [Button_Scores, change_log] = GetScores(N_Arms, Change_Rng, Initialize)
     persistent means new_means prs_change_log
 
     if ~exist("Initialize", "var"); Initialize = false; end
 
     if Initialize || isempty(means) || isempty(prs_change_log)
         % Initialize means ensuring they stay within [1, 100]
-        %means = [randi([40, 70], 1, N_Arms - 1), randi([80, 100], 1, 1)];
-        means= [randi([15,85], 1, N_Arms - 1), randi([75, 100], 1, 1)];
+        means = [randi([40, 70], 1, N_Arms - 1), randi([80, 100], 1, 1)];
         
         % Generate new means from normal distributions
         new_means = zeros(1, N_Arms);

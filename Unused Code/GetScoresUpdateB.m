@@ -1,4 +1,4 @@
-function [Button_Scores, change_log,f_means,mhn_dist] = GetScores(Arms, Change_Rng, Static_Arm, Initialize)
+function [Button_Scores, change_log,f_means] = GetScoresUpdateB(Arms, Change_Rng, Static_Arm, Initialize)
     persistent means so_means prs_change_log means_ra_idx
     n_arms = length(Arms);
     if ~exist("Initialize", "var"); Initialize = false; end
@@ -42,45 +42,34 @@ function [Button_Scores, change_log,f_means,mhn_dist] = GetScores(Arms, Change_R
 
     % Generate new points from specified distributions
     new_points = zeros(1, n_arms);
-    mhn_dist = zeros(n_arms, n_arms); % Matrix to store Mahalanobis distances
-
     for arm_idx = 1:length(means_ra_idx)
         arm = means_ra_idx(arm_idx);
         valid_point = false; % Flag to check if the point is valid
         while ~valid_point
             if arm <= n_arms - 2
-                new_points(arm) = floor(normrnd(means(arm), 15));
+                new_points(arm) = floor(normrnd(so_means(arm), 15));
             elseif arm == n_arms - 1
-                mu_right = log((means(end - 1)^2) / sqrt(15^2 + (means(end - 1)^2)));
-                sd_right = sqrt(log((15^2) / (means(end - 1)^2) + 1));
+                mu_right = log((so_means(end - 1)^2) / sqrt(15^2 + (so_means(end - 1)^2)));
+                sd_right = sqrt(log((15^2) / (so_means(end - 1)^2) + 1));
                 new_points(arm) = floor(lognrnd(mu_right, sd_right));
             else
-                mu_left = log((means(end)^2) / sqrt(15^2 + (means(end)^2)));
-                sd_left = sqrt(log((15^2) / (means(end)^2) + 1));
+                mu_left = log((so_means(end)^2) / sqrt(15^2 + (so_means(end)^2)));
+                sd_left = sqrt(log((15^2) / (so_means(end)^2) + 1));
                 lognormal_sample = floor(lognrnd(mu_left, sd_left));
-                central_value = 2 * means(end);
+                central_value = 2 * so_means(end);
                 new_points(arm) = central_value - lognormal_sample;
             end
-            
+
             % Check if the generated point is within the valid range
             if new_points(arm) >= 1 && new_points(arm) <= 100
                 valid_point = true; % Point is valid
             end
         end
     end
-    cov_matrix = cov(new_points);
 
-    % Compute Mahalanobis distances between all pairs of points
-    for i = 1:n_arms
-        for j = 1:n_arms
-            diff = new_points(i) - new_points(j);
-            mhn_dist(i, j) = sqrt(diff' * inv(cov_matrix) * diff);
-        end
-    end
-    mhn_dist
-    
-    Button_Scores = new_points;
-
+   Button_Scores = new_points;
+   
+   
     f_means=means;
     % Return the change log
     change_log = prs_change_log;

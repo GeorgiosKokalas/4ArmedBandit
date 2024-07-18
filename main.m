@@ -3,9 +3,6 @@
 % The program allows the user to insert variables. This happens in 'InsertParams.m' 
 
 function main(Patient_Name)
-    % Call the task Start Event 
-    CreateEvent("taskStart");
-    
     if ~exist("Patient_Name","var"); Patient_Name = 'TEST'; end
 
     % Add all the directories in the path just in case
@@ -13,6 +10,9 @@ function main(Patient_Name)
     cur_dir = cur_script(1:end-length(mfilename));
     cd(cur_dir);
     addpath(genpath(cur_dir));
+    
+    % Call the task Start Event 
+     CreateEvent("taskStart");
     
     % Store the task Start Event
 
@@ -26,7 +26,7 @@ function main(Patient_Name)
     sca;  
     
     % Store the saves
-    CreateEvent("taskEnd")
+    CreateEvent("taskStop")
 
     pool = gcp('nocreate');
     if ~isempty(pool); delete(pool); end

@@ -33,7 +33,7 @@ function in_pars = InsertParams(Patient_Name)
     in_pars.text.size.intro = 45;           % Integer - Determines the text size during the Introduction
     in_pars.text.size.intro3 = 70;          % Integer - Determines the text size during the 3rd part of the Introduction
     % in_pars.text.size.score_count = 50;     % POSSIBLY UNUSED   
-    in_pars.text.size.button_score = 300;   % Integer - Determines the size of the score displayed on each button
+    in_pars.text.size.button_score = 220;   % Integer - Determines the size of the score displayed on each button
     in_pars.text.size.title = 25;           % Integer - Determines the size of the title below each avatar
     in_pars.text.size.scores = 45;          % Integer - Determines the size of the total scores displayed next to the avatars
     in_pars.text.size.turn_order = 80;      % Integer - Determines the size of the text displaying the turn order
@@ -44,7 +44,7 @@ function in_pars = InsertParams(Patient_Name)
     in_pars.trial.show_intro = true;        % Logical - Determines whether or not the introduction will be shown
     % in_pars.trial.duration_s = 20;          % POSSIBLY UNUSED
     in_pars.trial.cpu_wait_s = [2, 4];      % Vector of 2 positives - Range of cpu waiting times to simulate decision making
-    in_pars.trial.num = 1;                  % Integer - Determines the number of trials per block
+    in_pars.trial.num = 50;                 % Integer - Determines the number of trials per block
     in_pars.trial.photodiode_dur_s = 0.5;   % Positive number - determines how long the photodiode will be shown for
 
     in_pars.target.radius_percent = 95;                    % Positive integer - The percentage of size compared to their possible max

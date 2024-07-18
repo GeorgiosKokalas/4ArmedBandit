@@ -12,17 +12,25 @@
 %   - player_data   (Data on the player's performance)
 %   - cpu_data      (Data on the cpu's performance)
 %   - Totals        (The updated Totals initially provided)
-%   - trial_events  (The events that occured during this trial and their time 
+%   - trial_events  (The events that occured during this trial and their time)   
+%   - extras        (struct to store extra things)
 
-function [player_data, cpu_data, Totals, trial_events, abort] = RunTrial(Parameters, Disbtn, Button_Scores, Cpu, Totals, Block_Idx, Trial_Idx)
+function [player_data, cpu_data, Totals, trial_events, extras] = RunTrial(Parameters, Disbtn, Button_Scores, Cpu, Totals, Block_Idx, Trial_Idx)
     %% PRE STAGE - Before the timer of the activity starts
     % Create a trial Start event
     trial_events = CreateEvent("trialStart", Block_Idx, Trial_Idx);
 
     % Initialize some of the variables we need for storing
+    player_data = struct('time',NaN, 'score', NaN, 'choice', NaN);
+    cpu_data = struct('score', NaN, 'choice', NaN);
     pd_s = Parameters.trial.photodiode_dur_s;
     abort = false;
+    archived_button_scores = [];
+    archived_score_means = [];
+    archived_mhb_dist = [];
+    block_change_logs = NaN;
     
+    [pl_events, cpu_events] = deal([]);
 
 
     %% PRESENTATION STAGE - The trial begins    
@@ -56,24 +64,55 @@ function [player_data, cpu_data, Totals, trial_events, abort] = RunTrial(Paramet
     % end
     % WaitSecs(1);
 
-
     % Flip a coin on who starts first
     disp("NEW TRIAL")
     if rotation_result > 180
-        [player_data, Totals, pl_events] = playerTurn(Parameters, Disbtn.player, Button_Scores, Totals, ...
-                                                      Cpu, Block_Idx, Trial_Idx, pd_s);
-        [cpu_data, Totals, cpu_events] = cpuTurn(Parameters, Disbtn.cpu, Button_Scores, Cpu, Totals,...
-                                                 Block_Idx, Trial_Idx, pd_s);
+        [player_data, Totals, pl_events, abort] = playerTurn(Parameters, Disbtn.player, Button_Scores, Totals, ...
+                                                      Cpu, Block_Idx, 2*Trial_Idx-1, pd_s);
+        if ~abort
+            % Update the scores because I suddenly need to mid trial 
+            [Button_Scores, block_change_logs, score_means, mhb_dist] = GetScores(Parameters.target.button_names, ...  % The scores for each button
+                                                                          Parameters.target.score_change_rng,...
+                                                                          Disbtn.player, false);
+            archived_score_means = score_means;
+            archived_button_scores = Button_Scores;
+            archived_mhb_dist = mhb_dist;
+           
+            % Carry out the Cpu's turn
+            [cpu_data, Totals, cpu_events] = cpuTurn(Parameters, Disbtn.cpu, Button_Scores, Cpu, Totals,...
+                                                     Block_Idx, 2*Trial_Idx, pd_s);
+        end
         trial_events = [trial_events; pl_events; cpu_events];
     else
         [cpu_data, Totals, cpu_events] = cpuTurn(Parameters, Disbtn.cpu, Button_Scores, Cpu, Totals,...
-                                                 Block_Idx, Trial_Idx, pd_s);
-        [player_data, Totals, pl_events] = playerTurn(Parameters, Disbtn.player, Button_Scores, Totals, ...
-                                                      Cpu, Block_Idx, Trial_Idx, pd_s);
+                                                 Block_Idx, 2*Trial_Idx-1, pd_s);
+        % Update the scores because I suddenly need to mid trial 
+        [Button_Scores, block_change_logs, score_means, mhb_dist] = GetScores(Parameters.target.button_names, ...  % The scores for each button
+                                                                      Parameters.target.score_change_rng, ...
+                                                                      Disbtn.player, false);
+        archived_score_means = score_means;
+        archived_button_scores = Button_Scores;
+        archived_mhb_dist = mhb_dist;
+        
+        % Carry out the player's turn
+        [player_data, Totals, pl_events, abort] = playerTurn(Parameters, Disbtn.player, Button_Scores, Totals, ...
+                                                      Cpu, Block_Idx, 2*Trial_Idx, pd_s);
         trial_events = [trial_events; cpu_events; pl_events];
     end
 
+    if Trial_Idx ~= Parameters.trial.num && ~abort
+        [Button_Scores, block_change_logs, score_means] = GetScores(Parameters.target.button_names, ...  % The scores for each button
+                                                                    Parameters.target.score_change_rng, ...
+                                                                    Disbtn.player, false);
+        archived_score_means = [archived_score_means; score_means];
+        archived_button_scores = [archived_button_scores; Button_Scores];
+        archived_mhb_dist = [archived_mhb_dist; mhb_dist];
+    end
+
     trial_events = [trial_events; CreateEvent("trialEnd", Block_Idx, Trial_Idx)];
+    extras = struct("abort", abort, 'button_scores', Button_Scores, 'archived_sm', archived_score_means, ...
+                    "archived_bs", archived_button_scores, "block_cl", block_change_logs, ...
+                    "archived_mhb", archived_mhb_dist);
 end
 
 
@@ -92,9 +131,11 @@ end
 %   - pl_data       (Data on the player's performance)
 %   - Totals        (The updated Totals initially provided)
 %   - events        (A list of the events that happened during the player's turn)   
-function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Totals, Cpu, Block_Idx, Trial_Idx, PD_S)
+function [pl_data, Totals, events, abort] = playerTurn(Pars, Disbtn, Button_Scores, Totals, Cpu, Block_Idx, Trial_Idx, PD_S)
     %% PRE CALCULATIONS FOR THE PLAYER TURN
     events = CreateEvent("playerTurnStart", Block_Idx, Trial_Idx);
+    pl_data = struct('time',NaN, 'score', NaN, 'choice', NaN);
+    abort = false;
 
     load("colors.mat", "color_list");
     disp("Player turn ")
@@ -105,14 +146,63 @@ function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Tot
     [pause_offset, score] = deal(0);
     start = GetSecs();
     elapsed_time = GetSecs() - start;
+    first_loop_pd = true;       % First loop with the photodiode drawing
+    first_loop_npd = true;      % First loop without the photodiode drawing
     
+    a_key = KbName('A');
+    b_key = KbName('B');
+    x_key = KbName('X');
+    y_key = KbName('Y');
+    p_key = KbName('P');
+    esc_key = KbName('ESCAPE');
+    choice = table('Size', [1,4],'VariableNames', string(Pars.target.button_names')', 'VariableTypes', repmat("logical", 1,4));
+
     %% LOOP PHASE - player will be making their choice
     while ~break_loop
-        % Get the player's input
-        pc_input = GetXBox();
+        % Get the time
+        elapsed_time = GetSecs()-pause_offset-start;
 
+        % Get the player's input
+        pl_ci = GetXBox();          % pl_ci = player controller input
+        [~,~,ex_ki] = KbCheck();    % ex_ki = experimenter keyboard input
+        keep_drawing = pl_ci.A || pl_ci.B || pl_ci.X || pl_ci.Y || pl_ci.Start || ...
+                       ex_ki(a_key) || ex_ki(b_key) || ex_ki(x_key) || ex_ki(y_key) || ...
+                       ex_ki(p_key) || ex_ki(esc_key);
+        
         % Draw the photodiode if this is the best time
-        if elapsed_time < PD_S; DrawPhotoDiode(Pars); end
+        % Also skip if no player input was provided to save memory;
+        if elapsed_time < PD_S
+            if first_loop_pd
+                first_loop_pd = false;
+                disp('a')
+            else
+                if ~keep_drawing; continue; end
+            end
+            DrawPhotoDiode(Pars); 
+        else
+            if first_loop_npd
+                first_loop_npd = false;
+                disp('b')
+            else
+                if ~keep_drawing; continue; end
+            end
+        end
+
+        if pl_ci.Start || ex_ki(p_key)
+            events = [events; CreateEvent("taskPause", Block_Idx, Trial_Idx)];
+            pause_offset = pauseGame(Pars, pause_offset);
+            events = [events; CreateEvent("taskResume", Block_Idx, Trial_Idx)];
+        elseif ex_ki(esc_key)
+            events = [events; CreateEvent("taskAbort", Block_Idx, Trial_Idx)];
+            abort = true;
+            return;
+        end
+
+        % Get the choice
+        choice.A = pl_ci.A || ex_ki(a_key);
+        choice.B = pl_ci.B || ex_ki(b_key);
+        choice.X = pl_ci.X || ex_ki(x_key);
+        choice.Y = pl_ci.Y || ex_ki(y_key);
         
         % Draw the Pars.avatars and any extra stuff
         drawExtras(Pars, Cpu, Totals, Trial_Idx, false);
@@ -123,7 +213,7 @@ function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Tot
             color = Pars.target.colors(button_idx,:);
 
             % In case we have selected a button to press, do these steps
-            if pc_input.(Pars.target.button_names(button_idx)) && ~break_loop
+            if choice.(Pars.target.button_names(button_idx)) && ~break_loop
                 color = color/0.8; 
 
                 % If the button is eligible, act accordingly     
@@ -132,7 +222,7 @@ function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Tot
                     events=[events; CreateEvent("playerDecisionMade", Block_Idx, Trial_Idx)];
                     
                     % Store the choice, the score and update the totals.
-                    choice = Pars.target.button_names(button_idx);
+                    pl_choice = Pars.target.button_names(button_idx);
                     choice_idx = button_idx;
                     score = Button_Scores(button_idx);
                     Totals.player = Totals.player + score;
@@ -144,7 +234,7 @@ function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Tot
             
             % Create the circle to be drawn for the target. Draw a ring if the player has pressed the target     
             Screen('FillOval',Pars.screen.window, color, Pars.target.rects(button_idx,:));
-            if pc_input.(Pars.target.button_names(button_idx)) && break_loop 
+            if choice.(Pars.target.button_names(button_idx)) && break_loop 
                 Screen('FrameOval',Pars.screen.window, repmat(255,1,4), Pars.target.ring_rects(button_idx,:), 10);
             end
             
@@ -199,16 +289,49 @@ function [pl_data, Totals, events] = playerTurn(Pars, Disbtn, Button_Scores, Tot
     Screen('Flip', Pars.screen.window);
     
     % Get the data for the player to be returned
-    pl_data = struct('time',elapsed_time, 'score', score, 'choice', choice);
+    pl_data = struct('time',elapsed_time, 'score', score, 'choice', pl_choice);
     WaitSecs(1);
     events = [events; CreateEvent("playerTurnEnd", Block_Idx, Trial_Idx)];
 end
 
-% function [ffset, Ev_Hold]
+
+%function pauseGame - Pause the Game while the player is playing
+% Arguments: 
+%   - Pars          (The experiment parameters)
+%   - Pause_Offset  (How long we have paused so far)
+% Return:
+%   - Pause_Offset  (How long we have paused so far)
+function Pause_Offset = pauseGame(Pars, Pause_Offset)
+    % Start timing the pause
+    offset_start = GetSecs();
+    WaitSecs(0.3);
+    
+    % Let the player know the game is paused
+    Screen('TextSize', Pars.screen.window, Pars.text.size.scores);
+    msg = 'Game is paused.\nPress Start on the controller, or P on the keyboard to unpause.';
+    DrawFormattedText2(msg, 'win', Pars.screen.window, 'sx', 'center', 'sy', 'center', ...
+                       'xalign', 'center', 'baseColor', repmat(255, 1, 4));
+    Screen('Flip', Pars.screen.window);
+    
+    % Wait for input
+    while true
+        pl_ci = GetXBox();
+        [~, ~, ex_ki] = KbCheck();
+        
+        if pl_ci.Start || ex_ki(KbName('P')); break; end
+    end
+    WaitSecs(0.3);
+    disp(Pause_Offset);
+
+    % Note the time passed
+    Pause_Offset = Pause_Offset + (GetSecs() - offset_start);
+    disp(Pause_Offset);
+end
+
 
 % cpuTurn - Function for the turn of the cpu
 % Arguments:
-%   - Pars.screen   (The experiment parameters)
+%   - Pars          (The experiment parameters)
 %   - Disbtn        (The buttons disabled for the player and cpu)
 %   - Button_Scores (The score values of  each button)
 %   - Cpu           (A pointer to the cpu handle)
