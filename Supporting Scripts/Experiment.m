@@ -9,7 +9,7 @@ function Experiment(Parameters)
     %might need to change to 2,4,5
     cpu_list = [CpuPlayer(2, "Indifferent", "Sam"), CpuPlayer(3, "Cooperative", "Tony"), CpuPlayer(5, "Competitive", "Kendal"),...
                 CpuPlayer(2, "Indifferent", "Sam"), CpuPlayer(3, "Cooperative", "Tony"), CpuPlayer(5, "Competitive", "Kendal")];
-    % cpu_list =  [CpuPlayer(5, "reductive")];
+    % cpu_list =  [CpuPlayer(5, "Indifferent", "Vic")];
     Parameters.avatars.player = 1;
     abort = false;
 
@@ -117,7 +117,7 @@ function Experiment(Parameters)
              cpu_scores.(table_name)(trial_idx)  = cpu_data.score;
         end
         % Inform the player that the block has ended
-        blockSwitch(Parameters,block_idx, num_blocks);
+        blockSwitch(Parameters,block_idx, num_blocks, cpu_list(cpu_idx), block_total);
 
         block_events = [block_events; CreateEvent("blockEnd", block_idx)];
         
@@ -199,14 +199,27 @@ end
 %   - Pars       (The pointer to the experiment parameters)
 %   - Block_Idx  (The block number)
 %   - Num_Blocks (The total number of blocks)
+%   - Cpu        (A handle to the CPU)
+%   - Totals     (The total scores of the experiment)
 % Outputs: None
-function blockSwitch(Pars, Block_Idx, Num_Blocks)
+function blockSwitch(Pars, Block_Idx, Num_Blocks, Cpu, Totals)
+    total_score = 0;
+    switch lower(string(Cpu.Score_Mode))
+        case "competitive"
+            total_score = Totals.player - Totals.cpu;
+        case "cooperative"
+            total_score = Totals.player + Totals.cpu;
+        otherwise
+            total_score = Totals.player;
+    end
+
+    text = sprintf('Block Total Score: %d!\n', total_score);
+
     % If this is the final block, exit the function
-    if Block_Idx == Num_Blocks; return; end
-    
-    % Generate the text that will be printed
-    text = sprintf('Block %d Complete! %d more to go!\n\n\n', Block_Idx, Num_Blocks-Block_Idx);
-    text = sprintf('%sPress any button to continue.', text);
+    if Block_Idx ~= Num_Blocks
+        text = sprintf('%s\nBlock %d Complete! %d more to go!', text, Block_Idx, Num_Blocks-Block_Idx);
+        text = sprintf('%s\nPress any button to continue.', text);
+    end
     
     % Print the text and show it
     Screen('TextSize', Pars.screen.window, Pars.text.size.score_totals);
