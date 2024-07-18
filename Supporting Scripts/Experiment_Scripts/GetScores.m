@@ -1,4 +1,4 @@
-function [Button_Scores, change_log,f_means] = GetScores(Arms, Change_Rng, Static_Arm, Initialize)
+function [Button_Scores, change_log,f_means,mhn_dist] = GetScores(Arms, Change_Rng, Static_Arm, Initialize)
     persistent means so_means prs_change_log means_ra_idx
     n_arms = length(Arms);
     if ~exist("Initialize", "var"); Initialize = false; end
@@ -42,6 +42,8 @@ function [Button_Scores, change_log,f_means] = GetScores(Arms, Change_Rng, Stati
 
     % Generate new points from specified distributions
     new_points = zeros(1, n_arms);
+    mhn_dist = zeros(n_arms, n_arms); % Matrix to store Mahalanobis distances
+
     for arm_idx = 1:length(means_ra_idx)
         arm = means_ra_idx(arm_idx);
         valid_point = false; % Flag to check if the point is valid
@@ -66,9 +68,17 @@ function [Button_Scores, change_log,f_means] = GetScores(Arms, Change_Rng, Stati
             end
         end
     end
+    cov_matrix = cov(new_points);
 
+    % Compute Mahalanobis distances between all pairs of points
+    for i = 1:n_arms
+        for j = 1:n_arms
+            diff = new_points(i) - new_points(j);
+            mhn_dist(i, j) = sqrt(diff' * inv(cov_matrix) * diff);
+        end
+    end
    Button_Scores = new_points;
- 
+   
    f_means=means;
     % Return the change log
     change_log = prs_change_log;
