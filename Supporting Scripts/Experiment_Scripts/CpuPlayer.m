@@ -98,7 +98,7 @@ classdef CpuPlayer < handle
                 case 4
                     obj.trickyBehavior(Button_Scores);
                 case 5
-                    obj.cheaterBehavior(Button_Scores);
+                    obj.trickyBehavior(Button_Scores); %changed from cheaterBehavior
             end
             choice = obj.Next_Choice;
             obj.Prev_Choice = choice;
@@ -185,19 +185,27 @@ classdef CpuPlayer < handle
 
         % Tricky Behavior
         function trickyBehavior(obj,Button_Scores)
-            [sorted_scores, sorted_indices] = sort(Button_Scores, 'descend');
-            best_score = sorted_scores(1); % best scores
-            second_best_score = sorted_scores(2); %basically nescores   
-            if rand() < 0.8
-                if rand() < (1 - (best_score - second_best_score) / 25)
-                    obj.Next_Choice = obj.Choice_List(sorted_indices(2));
+            [~, sorted_indices] = sort(Button_Scores, 'descend');
+
+            % Probability threshold
+            top_scores_prob = 0.60;
+            
+            % Determine the next choice based on the defined probabilities
+            if rand() < top_scores_prob
+                % Choose from the top two scores
+                if rand() < 0.5
+                    obj.Next_Choice = obj.Choice_List(sorted_indices(1)); % Choose the highest score
                 else
-                    obj.Next_Choice = obj.Choice_List(sorted_indices(1));
+                    obj.Next_Choice = obj.Choice_List(sorted_indices(2)); % Choose the second highest score
                 end
             else
-                obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List))); % Random choice
+                % Choose from the bottom two scores
+                if rand() < 0.5
+                    obj.Next_Choice = obj.Choice_List(sorted_indices(3)); % Choose the third highest score
+                else
+                    obj.Next_Choice = obj.Choice_List(sorted_indices(4)); % Choose the lowest score
+                end
             end
-
         end
 
         % Scammy Behavior

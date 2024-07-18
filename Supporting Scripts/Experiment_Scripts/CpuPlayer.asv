@@ -4,6 +4,7 @@ classdef CpuPlayer < handle
         Score_Mode      % How the CPU's scores will be interacting with the player's scores
         Name            % The name presented to the participant to represent the current cpu player
         Choice_List     % The list of choices that we have   
+        Choice_List_OG  % A record of the choice list originally
         Next_Choice     % The choice that will be made next by the CPU
         Prev_Choice     % The most recent choice made by the current CPU
         Choice_Origins  % The start choice that we define
@@ -15,7 +16,7 @@ classdef CpuPlayer < handle
 
     methods
         % Constructor, this sets up default mode
-        function obj = CpuPlayer(behavior_mode, score_mode, name, choice_order, next_choice, epsilon)
+        function obj = CpuPlayer(behavior_mode, score_mode, name, choice_list, next_choice, epsilon)
             % PRELIMINARY CHECKS
             is_valid_mode = false;
 
@@ -62,6 +63,7 @@ classdef CpuPlayer < handle
             obj.Score_Mode = score_mode;
             obj.Name = name;
             obj.Choice_List = choice_list;
+            obj.Choice_List_OG = choice_list;
             obj.Epsilon = epsilon;
             obj.Rewards = zeros(1, length(choice_list));
             obj.Counts = zeros(1, length(choice_list));
@@ -96,7 +98,7 @@ classdef CpuPlayer < handle
                 case 4
                     obj.trickyBehavior(Button_Scores);
                 case 5
-                    obj.cheaterBehavior(Button_Scores);
+                    obj.trickyBehavior(Button_Scores); %changed from cheaterBehavior
             end
             choice = obj.Next_Choice;
             obj.Prev_Choice = choice;
@@ -107,7 +109,8 @@ classdef CpuPlayer < handle
             obj.Next_Choice = obj.Choice_Origins;
             obj.Rewards = zeros(1, length(obj.Choice_List));
             obj.Counts = zeros(1, length(obj.Choice_List));
-            obj.Scores = zeros(1, length(obj.Choice_List)); % Reinitialize scores on reset
+            obj.Scores = zeros(1, length(obj.Choice_List));
+            obj.Choice_List = obj.Choice_List_OG;
         end
 
     end
@@ -172,7 +175,7 @@ classdef CpuPlayer < handle
 
         % The Cheater Behavior
         function cheaterBehavior(obj, Button_Scores)
-            if rand() < .80
+            if rand() < .55
                 [~, best_index] = max(Button_Scores);
                 obj.Next_Choice = obj.Choice_List(best_index);
             else
@@ -183,18 +186,28 @@ classdef CpuPlayer < handle
         % Tricky Behavior
         function trickyBehavior(obj,Button_Scores)
             [sorted_scores, sorted_indices] = sort(Button_Scores, 'descend');
-            best_score = sorted_scores(1); % best scores
-            second_best_score = sorted_scores(2); %basically nescores   
-            if rand() < 0.8
-                if rand() < (1 - (best_score - second_best_score) / 25)
-                    obj.Next_Choice = obj.Choice_List(sorted_indices(2));
+
+            % Probability thresholds
+            top_scores_prob = 0.6;
+            top_score_choice_prob = 0.3;
+            bottom_score_choice_prob = 0.2;
+
+            % Determine the next choice based on the defined probabilities
+            if rand() < top_scores_prob
+                % Choose from the top two scores
+                if rand() < 0.5
+                    obj.Next_Choice = obj.Choice_List(sorted_indices(1)); % Choose the highest score
                 else
-                    obj.Next_Choice = obj.Choice_List(sorted_indices(1));
+                    obj.Next_Choice = obj.Choice_List(sorted_indices(2)); % Choose the second highest score
                 end
             else
-                obj.Next_Choice = obj.Choice_List(randi(length(obj.Choice_List))); % Random choice
+                % Choose from the bottom two scores
+                if rand() < 0.5
+                    obj.Next_Choice = obj.Choice_List(sorted_indices(3)); % Choose the third highest score
+                else
+                    obj.Next_Choice = obj.Choice_List(sorted_indices(4)); % Choose the lowest score
+                end
             end
-
         end
 
         % Scammy Behavior

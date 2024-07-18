@@ -59,7 +59,7 @@ function [Button_Scores, change_log,f_means] = GetScores(Arms, Change_Rng, Stati
                 central_value = 2 * means(end);
                 new_points(arm) = central_value - lognormal_sample;
             end
-
+            
             % Check if the generated point is within the valid range
             if new_points(arm) >= 1 && new_points(arm) <= 100
                 valid_point = true; % Point is valid
@@ -68,9 +68,8 @@ function [Button_Scores, change_log,f_means] = GetScores(Arms, Change_Rng, Stati
     end
 
    Button_Scores = new_points;
-   
-   
-    f_means=means;
+ 
+   f_means=means;
     % Return the change log
     change_log = prs_change_log;
 end
