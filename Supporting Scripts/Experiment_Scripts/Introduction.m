@@ -13,8 +13,8 @@ function Introduction(Pars)
     % Store the event
     Pars.NewEvent(CreateEvent("intro1"));
     
-    Screen('TextSize', Pars.screen.window, 150);
-    DrawFormattedText(Pars.screen.window, 'Multi Armed Bandit task', 'center', Pars.screen.center(2)-100, color_list.white);
+    Screen('TextSize', Pars.screen.window, 170);
+    DrawFormattedText(Pars.screen.window, 'Mystery Machine Task', 'center', Pars.screen.center(2)-100, color_list.white);
 
     Screen('TextSize', Pars.screen.window, 100);
     DrawFormattedText(Pars.screen.window, 'Press any button to continue', 'center', Pars.screen.center(2)+150, color_list.white);

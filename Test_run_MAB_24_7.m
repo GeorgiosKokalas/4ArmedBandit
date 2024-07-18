@@ -1,4 +1,4 @@
-function run_MAB_24_7(taskRunNum,BR_connect)
+function Test_run_MAB_24_7(taskRunNum,BR_connect)
 %run_MAB_24_7(1,1)
 
 %taskrunNum is number of times this participant has run the task.
@@ -9,8 +9,8 @@ if nargin==1
     BR_connect = 1;
 end
 
-addpath(genpath('C:\Users\EMU - Behavior\Documents\MATLAB\Behavioral Tasks\BH\4MAB'))
-taskDir = 'C:\Users\EMU - Behavior\Documents\MATLAB\Behavioral Tasks\BH\4MAB';
+addpath(genpath('C:\Users\EMU - Behavior\Documents\MATLAB\Behavioral Tasks\BH\MAB'))
+taskDir = 'C:\Users\EMU - Behavior\Documents\MATLAB\Behavioral Tasks\BH\MAB';
 cd(taskDir)
 
 computerMaxVolume()
