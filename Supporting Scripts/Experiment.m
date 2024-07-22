@@ -9,7 +9,8 @@ function Experiment(Parameters)
     %might need to change to 2,4,5
     cpu_list = [CpuPlayer(2, "Indifferent", "Sam"), CpuPlayer(4, "Cooperative", "Tony"), CpuPlayer(5, "Competitive", "Kendal"),...
                 CpuPlayer(2, "Indifferent", "Sam"), CpuPlayer(4, "Cooperative", "Tony"), CpuPlayer(5, "Competitive", "Kendal")];
-    %cpu_list =  [CpuPlayer(5, "Competitive", "Kendal")];
+    % cpu_list =  [CpuPlayer(5, "Competitive", "Kendal")];
+
     Parameters.avatars.player = 1;
     abort = false;
 
